@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const passport = require("passport");
+const settings = require("./config/keys")
 
 const Post = require("../../models/Post");
 const Profile = require("../../models/Profile");
@@ -11,7 +12,7 @@ const validatePostInput = require("../../validation/post");
 // @route   GET api/posts/test
 // @desc    Test Posts Route
 // @access  Public
-router.get("/test", (req, res) => res.json({ msg: "Posts Works" }));
+router.get(settings.URL_BASE+"/test", (req, res) => res.json({ msg: "Posts Works" }));
 
 // @route   POST api/post
 // @desc    Test Posts Route
@@ -39,7 +40,7 @@ router.post(
 // @route   GET api/posts/:id
 // @desc    Get post by id
 // @access  Public
-router.get("/:id", (req, res) => {
+router.get(settings.URL_BASE+"/:id", (req, res) => {
   Post.findById(req.params.id)
     .then(post => res.json(post))
     .catch(err =>
@@ -50,7 +51,7 @@ router.get("/:id", (req, res) => {
 // @route   GET api/post
 // @desc    Get Posts
 // @access  Public
-router.get("/", (req, res) => {
+router.get(settings.URL_BASE+"/", (req, res) => {
   Post.find()
     .sort({ date: -1 })
     .then(posts => {
@@ -68,7 +69,7 @@ router.get("/", (req, res) => {
 // @desc    Delete a Post
 // @access  Private
 router.delete(
-  "/:id",
+  settings.URL_BASE+"/:id",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     Profile.findOne({ user: req.user.id }).then(profile => {
@@ -93,7 +94,7 @@ router.delete(
 // @desc    Like a Post
 // @access  Private
 router.post(
-  "/like/:id",
+  settings.URL_BASE+"/like/:id",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     Profile.findOne({ user: req.user.id }).then(profile => {
@@ -123,7 +124,7 @@ router.post(
 // @desc    Delete a Post
 // @access  Private
 router.post(
-  "/unlike/:id",
+  settings.URL_BASE+"/unlike/:id",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     Profile.findOne({ user: req.user.id }).then(profile => {
@@ -157,7 +158,7 @@ router.post(
 // @desc    Give your comment to a Post
 // @access  Private
 router.post(
-  "/comment/:id",
+  settings.URL_BASE+"/comment/:id",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     const { errors, isValid } = validatePostInput(req.body);
@@ -183,7 +184,7 @@ router.post(
 // @desc    Remove the comment in a post
 // @access  Private
 router.delete(
-  "/comment/:id/:comment_id",
+  settings.URL_BASE+"/comment/:id/:comment_id",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     Post.findById(req.params.id)
