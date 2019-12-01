@@ -38,7 +38,7 @@ locals {
     Owner       = "stephanzbti"
     Repo        = "Terraform-Kubernetes"
     Branch      = "development"
-    OAuthToken  = "718366e11d1cd97d1a82c8aeccc2afc0115c1624"
+    OAuthToken  = ""
   }
 }
 
