@@ -5,6 +5,8 @@ RUN mkdir /apps
 WORKDIR /apps
 COPY . .
 
+RUN chmod a+x ./scripts/entrypoint.sh
+
 RUN npm install
 
 CMD ["./scripts/entrypoint.sh"]
