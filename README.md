@@ -138,7 +138,9 @@ Para configuração do CodeBuild, optamos por configurar uma máquina mais lenta
 Optamos pela utilização do EKS para este projeto, graças a sua escalabilidade, alta disponibilidade, divisão de responsabilidade e __segurança__.
 
 #Kubernetes
+---
 ## Kubernetes
+---
  
 O Kubernetes e uma poderosa ferramenta de orquestração de containers, com ela podemos organizar os recursos da melhor maneira e ainda criar *réplicas* de nossas aplicações, para caso ocorra algum desastre a aplicação não fique fora do ar. Além disso, é uma das ferramentas com maior contribuição do GitHub, sendo uma comunidade forte e ativa de desenvolvimento. É possível também desenvolver plugins e serviços, que rodam junto ao Kubernetes e assim automatizar ainda mais todo o ambiente, e um desses exemplos seria o Ingress (Nginx ou ALB), cert-manager(Geração de Certificado Válidos), replicator(Réplica secrets), etc. Ao se utilizar todos os recursos que o Kubernetes nos provê, é possível ter uma infraestrutura pequena, porem com todos os recursos necessários para se executar uma aplicação perfeitamente.
  
