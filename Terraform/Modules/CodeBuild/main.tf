@@ -166,6 +166,11 @@ resource "aws_codebuild_project" "codebuild_project" {
     }
 
     environment_variable {
+      name  = "IMAGE_REPO_NAME_TERRAFORM"
+      value = var.ecr_terraform
+    }
+
+    environment_variable {
       name  = "PROJECT_NAME"
       value = var.project_name
     }

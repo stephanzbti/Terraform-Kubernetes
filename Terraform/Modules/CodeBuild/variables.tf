@@ -37,3 +37,8 @@ variable "ecr_backend" {
   description = "CodeBuild - ECR BackEnd"
   type        = any
 }
+
+variable "ecr_terraform" {
+  description = "CodeBuild - ECR TerraForm"
+  type        = any
+}

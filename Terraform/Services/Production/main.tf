@@ -66,6 +66,7 @@ module "codebuild" {
   compute_type      =   local.compute_type
   ecr_frontend      =   module.ecr.ecr_frontend
   ecr_backend       =   module.ecr.ecr_backend
+  ecr_terraform     =   module.ecr.ecr_terraform
   environment       =   local.environment
 }
 
