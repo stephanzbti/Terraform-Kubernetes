@@ -2,15 +2,17 @@
 
 Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-code (IaC), de um projeto proivisionado totalmente na AWS, utilizando seus recursos de forma pratica e explicita. Neste projeto abordaremos o Terraform, armazenando seus arquivos no S3, e provisionando totalmente a infra necessária para que a aplicação execute perfeitamente, além disto, utilizaremos os recursos do CodePipeline e CodeBuild, para fazer a automatização dos builds, teste e deployments de nossa aplicação.
 
-Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que será criada pelo nosso arquivo do Terraform. Todos os passos necessários para a execução deste projeto estão descritos abaixo, caso deseje saber mais a fundo sobre cada parte do projeto, no final existirá um Link para cada ReadME responsável.
+Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que será criada pelo nosso arquivo do Terraform. Todos os passos necessários para a execução deste projeto estão descritos abaixo. Caso deseje ter um conhecimento mais a fundo do Terraform e da AWS e seus recursos, recomendo que leia a documentacao de ambas as plataformas.
 
 Para aplicarmos completamente todos os passos necessarios para que o projeto execute corretamente, siga os seguintes passos:
 
-
 ```
-    .* TerraForm
-    ..* Serviços
+    .* [TerraForm](#Terraform)
+    ..* [Serviços] (#Services)
     ..* Infra-Estrutura
+    .* AWS
+    ..* CodePipeline
+    ..* CodeBuild
     .* Kubernetes
     ..* Ingress Nginx
     ..* Storage Class
@@ -18,6 +20,7 @@ Para aplicarmos completamente todos os passos necessarios para que o projeto exe
     ..* Aplicação
     .* Aplicação
 ```
+#Terraform
 ---
 ## TerraForm
 ---
@@ -61,6 +64,8 @@ export AWS_DEFAULT_REGION=""
 
 Estas variáveis de ambiente são responsável por conceder o acesso a AWS e permitir ao TerraForm criar e gerenciar os recursos na nuvem. Para obter essas credenciais é necessário seguir o seguinte tutorial: [AWS IAM](https://docs.aws.amazon.com/pt_br/general/latest/gr/managing-aws-access-keys.html).
 
+Por padrao este projeto esta configurado para criar um bucket com o nome __*terraform-state-files-hotmart*__, caso deseje mudar o nome do Bucket ou caso de erro na criacao por duplicidade no nome do Bucket, recomendo que edit os arquivos __*main.tf*__, das pastas *Infraestructure/(Development/Production)* e *Services/(Development/Production)*, na tag __*Terraform{ backend "s3" {}}*__ para o novo nome de Bucket desejado.
+
 Após a configuração necessária para o TerraForm acessar a AWS, será necessária a execução de dois comandos TerraForm, sendo eles:
 
 ```
@@ -71,6 +76,7 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 
 Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para armazenar todos os arquivos Tf State, e uma tabela no Dynamo DB para fazer a gestão de cada Locks.
 
+#Services
 ### Serviços
 
 Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de Build deste aplicação. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
@@ -118,11 +124,11 @@ O CodePipeline é responsável por gerenciar todo o pipeline de nosso projeto e 
  
 Para o processo de build, optamos por utilizar o CodeBuild, pela praticidade na integração com o CodePipeline e os recursos da AWS. É necessário apenas escrever um arquivo *buildspec.yml* no projeto e definir todos os passos necessários para o processo de build da aplicação.
 > Este arquivo *buildspec.yml* está definido no root deste repositório, por questões de praticidade. Nas considerações finais, terá uma overview de toda organização deste repositório.
- 
+
 #### CodeBuild
  
 Para configuração do CodeBuild, optamos por configurar uma máquina mais lenta para o ambiente de *development* e uma máquina mais poderosa para o ambiente de *production*, por questões de custo. É possível configurar uma rede VPC, para que o CodeBuild tenha acesso a rede interna da AWS, porém optamos por não configurar, pela não necessidade de acesso a alguma aplicação interna.
- 
+
 ### EKS
  
 Optamos pela utilização do EKS para este projeto, graças a sua escalabilidade, alta disponibilidade, divisão de responsabilidade e __segurança__.
@@ -227,6 +233,21 @@ Este projeto não tem como foco a aplicação feita, apenas demonstrar o process
  
 Para o build do FrontEnd, optamos por utilizar uma imagem Docker com o NodeJS, porém existem outras formas mais práticas para fazermos esse processo, uma delas seria o CodeBuild buildar o código em React e o Docker utilizar apenas o código Buildado, neste processo ganhamos o poder de facilitar o Build, pois ao utilizarmos o Build por Environment Variable podemos ter problemas ao setar essas variáveis dentro do Build do Docker, podendo se tornar um processo oneroso, o que quando colocamos buildando no CodeBuild diretamente e não no docker, não corre.
 
+Para que esta aplicacao funcione corretamente, e necessario que se tenha as seguintes variaveis de ambiente:
+
+```
+SECRET_OR_KEY - Reponsavel pela Secret Key utilizada pelo JWT. (Secret)
+SERVER_TYPE - Selecionar o formato que ia ser executado a aplicacao. (Configmap)
+MONGO_URI - URI do Banco de dados do MongoDB (mongodb://). (Secret)
+URL_BASE - URL Base da aplicacao. (Configmap)
+NODE_ENV - Environment da aplicacao. (Configmap)
+PORT - Porta pelo qual ira rodar. (Configmap)
+```
+
 ---
 ## Consideracoes Finais
 ---
+
+Todo este projeto esta automatizado para utilizar como Infraestructure-as-Code, sendo necessario apenas o apply inicial, para que seja provisionado toda a automacao desejada. Este apply inicial pode ser feito a partir do build do Dockerfile existente dentro da pasta *Terraform/*, dessa forma facilita a configuracao inicial da aplicacao.
+
+O BuildSpec deste projeto foi feito pensando que todos os arquivos estariam no mesmo repositorio, porem foi desenhado ja pensando no caso de termos de criar repositorios fixos para o Terraform, Kubernetes e a Application, como o contexto pode mudar e aplicacoes tendem a aumentar de tamanho, temos sempre de imaginar em como escalar determinado projeto, e dessa forma fica facil escalar todo o necessario.
