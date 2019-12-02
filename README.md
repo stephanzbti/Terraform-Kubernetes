@@ -4,7 +4,23 @@ Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-c
 
 Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que será criada pelo nosso arquivo do Terraform. Todos os passos necessários para a execução deste projeto estão descritos abaixo, caso deseje saber mais a fundo sobre cada parte do projeto, no final existirá um Link para cada ReadME responsável.
 
+Para aplicarmos completamente todos os passos necessarios para que o projeto execute corretamente, siga os seguintes passos:
+
+
+```
+    .* TerraForm
+    ..* Serviços
+    ..* Infra-Estrutura
+    .* Kubernetes
+    ..* Ingress Nginx
+    ..* Storage Class
+    ..* MongoDB
+    ..* Aplicação
+    .* Aplicação
+```
+
 ## TerraForm
+---
 
 Neste projeto optamos pela utilizaçao do TerraForm (IaC), pela práticidade e facilidade que temos com ele. Por ter sido projeto para se utilizar com equipes de grandes de desenvolvimento, trabalhando todos os processos necessários para este tipo de ação, ele conta com sistema de Lock, quando necessário, com armazenamento de suas configurações em nuvem, tendo toda a gestão para evitar falhas gerenciadas por ele.
 
@@ -92,6 +108,7 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 > Estes comando devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, será necessário executar este comando na pasta *Terraform/Infraestructure/__(Development/Production)__*, de acordo com qual ambiente deseja provisionar.
  
 ## AWS
+---
  
 ### CodePipeline
  
@@ -203,7 +220,11 @@ kubectl edit secret -n application backend-user
 Um importante ponto a ser analisado está nas configurações de imagens do kubernetes, o arquivo YAML de Deployment está configurado para a imagem __*.*__ (pelo qual nao existe), porem ao passar pelo CodeBuild será feito a correção e o deployment seria corrigido com a imagem correta, gerada pelo CodeBuild. Caso deseje pode modificar o arquivo YAML de Deployment para o repositório de imagem correto, o repositório foi gerado automaticamente junto ao CodeBuild e se encontra no ECR, lembre-se de colocar o repositório correto em cada aplicação.
  
 ## Aplicação
+---
  
 Este projeto não tem como foco a aplicação feita, apenas demonstrar o processo de provisionamento de uma InfraEstrutura, utilizando a AWS, EKS e o TerraForm, sera dada apenas uma explicação rapida e simples deste projeto. Este projeto foi selecionado pelo fato de ser uma aplicação que contém FrontEnd, BackEnd e um Banco de Dados, que simula muito bem uma aplicação simples. Ele contém um FrontEnd estático, provisionado por uma imagem Docker proveniente de uma imagem do [Nginx](https://hub.docker.com/_/nginx), e um BackEnd, provisionado por uma imagem Docker proveniente de uma imagem do [NodeJS](https://hub.docker.com/_/node), fazendo o processo de Build e automatização de maneira pratica e facil.
  
 Para o build do FrontEnd, optamos por utilizar uma imagem Docker com o NodeJS, porém existem outras formas mais práticas para fazermos esse processo, uma delas seria o CodeBuild buildar o código em React e o Docker utilizar apenas o código Buildado, neste processo ganhamos o poder de facilitar o Build, pois ao utilizarmos o Build por Environment Variable podemos ter problemas ao setar essas variáveis dentro do Build do Docker, podendo se tornar um processo oneroso, o que quando colocamos buildando no CodeBuild diretamente e não no docker, não corre.
+
+## Consideracoes Finais
+---
