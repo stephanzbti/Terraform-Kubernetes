@@ -6,20 +6,19 @@ Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que
 
 Para aplicarmos completamente todos os passos necessarios para que o projeto execute corretamente, siga os seguintes passos:
 
-```
-    .* [TerraForm](#Terraform)
-    ..* [Serviços] (#Services)
-    ..* Infra-Estrutura
-    .* AWS
-    ..* CodePipeline
-    ..* CodeBuild
-    .* Kubernetes
-    ..* Ingress Nginx
-    ..* Storage Class
-    ..* MongoDB
-    ..* Aplicação
-    .* Aplicação
-```
+.* [TerraForm](#Terraform)
+..* [Serviços](#Services)
+..* Infra-Estrutura
+.* AWS
+..* CodePipeline
+..* CodeBuild
+.* Kubernetes
+..* Ingress Nginx
+..* Storage Class
+..* MongoDB
+..* Aplicação
+.* Aplicação
+
 #Terraform
 ---
 ## TerraForm
