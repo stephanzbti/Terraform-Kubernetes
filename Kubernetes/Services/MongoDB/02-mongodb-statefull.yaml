@@ -1,0 +1,56 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mongodb-statefull
+  namespace: mongodb
+spec:
+  replicas: 1
+  serviceName: "mongodb"
+  template:
+    metadata:
+      labels:
+        app: mongodb-statefull
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mongo
+          image: mongo
+          command:
+            - mongod
+            - "--smallfiles"
+            - "--noprealloc"
+            - "--bind_ip=0.0.0.0"
+            - "--auth"
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongodb-persistent-storage
+              mountPath: /data/db
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "512m"
+            limits:
+              memory: "1024Mi"
+              cpu: "768m"
+        - name: mongo-sidecar
+          image: cvallance/mongo-k8s-sidecar
+          env:
+            - name: MONGO_SIDECAR_POD_LABELS
+              value: "role=mongo,environment=test"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "64m"
+            limits:
+              memory: "128Mi"
+              cpu: "128m"
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-persistent-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "fast"
+      resources:
+        requests:
+          storage: 10Gi
