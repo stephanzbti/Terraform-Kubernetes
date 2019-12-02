@@ -227,5 +227,6 @@ Este projeto não tem como foco a aplicação feita, apenas demonstrar o process
  
 Para o build do FrontEnd, optamos por utilizar uma imagem Docker com o NodeJS, porém existem outras formas mais práticas para fazermos esse processo, uma delas seria o CodeBuild buildar o código em React e o Docker utilizar apenas o código Buildado, neste processo ganhamos o poder de facilitar o Build, pois ao utilizarmos o Build por Environment Variable podemos ter problemas ao setar essas variáveis dentro do Build do Docker, podendo se tornar um processo oneroso, o que quando colocamos buildando no CodeBuild diretamente e não no docker, não corre.
 
+---
 ## Consideracoes Finais
 ---
