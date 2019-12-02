@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const passport = require("passport");
+const settings = require("./config/keys");
 
 const user = require("./routes/api/user");
 const profile = require("./routes/api/profile");
@@ -43,9 +44,9 @@ mongoose
 app.use(passport.initialize());
 require("./config/passport")(passport);
 
-app.use("/api/user", user);
-app.use("/api/profile", profile);
-app.use("/api/post", post);
+app.use(settings.URL_BASE+"/user", user);
+app.use(settings.URL_BASE+"/profile", profile);
+app.use(settings.URL_BASE+"/post", post);
 
 const port = process.env.PORT || 8080;
 
