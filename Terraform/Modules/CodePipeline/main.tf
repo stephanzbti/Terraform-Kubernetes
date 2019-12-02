@@ -5,6 +5,7 @@
 resource "aws_s3_bucket" "codepipeline_artifact_bucket" {
   bucket = "${var.project_name}-${var.environment}-artifact"
   acl    = "private"
+  force_destroy = true
 
   server_side_encryption_configuration {
     rule {
@@ -74,7 +75,7 @@ EOF
   ]
 }
 
-resource "aws_codepipeline" "frontend-codepipeline" {
+resource "aws_codepipeline" "codepipeline_project" {
   name     = "${var.project_name}-${var.environment}-pipeline"
   role_arn = aws_iam_role.codepipeline_role.arn
 

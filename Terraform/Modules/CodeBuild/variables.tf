@@ -7,6 +7,11 @@ variable "project_name" {
   type        = string
 }
 
+variable "cluster_name" {
+  description = "CodeBuild - EKS Cluster Name"
+  type        = string
+}
+
 variable "environment" {
   description = "CodeBuild - Environment"
   type        = string

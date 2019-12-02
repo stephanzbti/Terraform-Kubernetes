@@ -40,6 +40,7 @@ locals {
     Branch      = "master"
     OAuthToken  = ""
   }
+  cluster_name  = "Kubernetes-Hotmart-Production"
 }
 
 data "aws_kms_key" "s3_kms_key" {
@@ -68,6 +69,7 @@ module "codebuild" {
   ecr_backend       =   module.ecr.ecr_backend
   ecr_terraform     =   module.ecr.ecr_terraform
   environment       =   local.environment
+  cluster_name      =   local.cluster_name
 }
 
 module "codepipeline" {

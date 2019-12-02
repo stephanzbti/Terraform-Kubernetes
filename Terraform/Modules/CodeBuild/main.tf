@@ -12,6 +12,7 @@ data "aws_region" "user_identity_region" {}
 resource "aws_s3_bucket" "codebuild_cache" {
   bucket = "${var.project_name}-${var.environment}-codebuild-cache"
   acl    = "private"
+  force_destroy = true
 
   server_side_encryption_configuration {
     rule {
@@ -178,6 +179,11 @@ resource "aws_codebuild_project" "codebuild_project" {
     environment_variable {
       name  = "REACT_APP_STAGE"
       value = var.environment
+    } 
+
+    environment_variable {
+      name  = "ESK_CLUSTER_NAME"
+      value = var.cluster_name
     } 
   }
 
