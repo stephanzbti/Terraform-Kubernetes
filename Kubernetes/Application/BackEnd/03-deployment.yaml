@@ -22,7 +22,8 @@ spec:
     spec:
       containers:
       - name: backend-user
-        image: 588231123606.dkr.ecr.us-east-1.amazonaws.com/hotmart-project-development-backend:hotmart-project-latest
+        imagePullPolicy: always
+        image: .
         env:
           - name: SECRET_OR_KEY
             valueFrom:
