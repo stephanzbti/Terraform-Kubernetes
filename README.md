@@ -78,7 +78,9 @@ Para isso optamos por criar uma VPC exclusiva para o EKS e seus workers, sendo d
 
 Criado o EKS, e necessario que seja criado o Node Group(Workes), para que tenhamos recursos necessario para prover nossa aplicacao. Cada Node Group e necessario que seja selecionados a Instancia EC2 desejada, as subnets que serao utilizadas pelas instancias, e o tamanho desejado de workers, sendo configurado por *desejado*, *maximo*, *minimo*. Feitas todas essas configuracoes seu Node Group estara pronto para ser utilizado, e seu EKS tambem estara pronto para prover aplicacoes.
 
-Neste projeto temos os arquivos TF Files necessarios para criarmos automaticamente todo o EKS, sendo desde a parte do VPC ate o Node Group. Dentro da pasta *Infraestructure/Development* ou *Infraestructure/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo. Caso deseje modificar o VPC gerado, e necessario modificar apenas o *main.tf* que esta dentro da pasta *Infraestructure/(Development/Production)/vpc*.
+Neste projeto temos os arquivos TF Files necessarios para criarmos automaticamente todo o EKS, sendo desde a parte do VPC,  Node Group e route53. Dentro da pasta *Infraestructure/Development* ou *Infraestructure/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo. Caso deseje modificar o VPC gerado, e necessario modificar apenas o *main.tf* que esta dentro da pasta *Infraestructure/(Development/Production)/vpc*.
+
+Optamos por criar automaticamente o Route53, sendo ele gerado a partir dos valores configurados para a criacao do EKS. O DNS criado teria o nome: *{cluster_name}-{environment}.{aws_region}.com*, gerando tambem os certificados WildCard pelo Certificate Manager, ficando **.{cluster_name}-{environment}.{aws_region}.com*. Este DNS criado, sera utilizado para o acesso a aplicacao.
 
 Para iniciar o processo de criação dos serviços é necessário executar os seguintes comandos:
 
@@ -106,3 +108,36 @@ Para configuraca do CodeBuild, optamos por configurar uma maquina mais lenta par
 ### EKS
 
 Optamos pela utilizacao do EKS para este projeto, gracas a sua escalabilidade, alta disponibilidade, divisao de responsabilidade e __seguranca__.
+
+## Kubernetes
+
+O Kubernetes e uma poderosa ferramenta de orquestracao de containers, com ela podemos organizar os recursos da melhor maneira e ainda criar *replicas* de nossas aplicacoes, para caso ocorra algum desastre a aplicacao nao fique fora do ar. Alem disso, e uma das ferramentas com maior contribuicao do GitHub, sendo uma comunidade forte e ativa de desenvolvimento. E possivel tambem desenvolver plugins e servicos, que rodem junto ao Kubernetes e assim automatizem ainda mais todo o ambiente, e um desses exemplos seria o Ingress (Nginx ou ALB), cert-manager(Geracao de Certificado Validos), replicator(Replica secrets), etc. Ao se utilizar todos os recursos que o Kubernetes nos prove, e possivel ter uma infraestrutura pequena, porem com todos os recursos necessarios para se executar uma aplicacao perfeitamente.
+
+Neste projeto, optamos por deixar o EKS fazer toda a gestao de recursos na nuvem necessarias para que a aplicacao execute com seguranca e escalabilidade. Dessa forma, optamos por utilizar um Ingress Nginx, no lugar de um ALB, pela questao de praticidade de se aplicar esse recurso e principalmente pela questao de custo que teriamos ao utilizar. Um ALB tem um custo fixo mensal de $25, alem disso, ainda existe um custo variavel que ocorre de acordo com a quantidade de dados trafegados e a quantidade de requisicoes por mes, dessa forma poderia deixar um projeto pequeno inviavel. O Ingress Nginx utiliza os recursos das proprias maquinas do Kubernetes, e por necessitar de um processamento baixo e de pouca memoria, faz com que o custo com essa aplicacao seja pequena, e ela funcione perfeitamente nestes casos de uso. Uma vantagem do ALB, seria a utilizacao de TCP (Secure), o que o Ingress Nginx nao atenderia as especificacoes, portanto sempre recomendo analisar muito bem quais as necessidades dos servicos que serao providos pelos ingress, e acima de tudo gerenciar isso muito bem.
+
+Os arquivos Kubernetes deste projetos estao armazenados na pasta *Kubernetes/*, eles estao divididos em dois conjuntos *Kubernetes/Application* e *Kubernetes/Services*. Segue uma explicacao detalhada de cada pasta:
+
+```
+Kubernetes/
+    |- Application/ -> Reponsável por armazenar todos os arquivos yaml das aplicacoes deste projeto.
+    |    |- FrontEnd/ -> Arquivos yaml do FrontEnd.
+    |    |- BackEnd/ -> Arquivos yaml do BackEnd.
+    |- Services/ -> Responsável por armazenar toda a infraestrutura necessária para a aplicação executar.
+    |    |- Ingress-Nginx/ -> Arquivos yaml do Ingress Nginx.
+    |    |- MongoDB/ -> Arquivos yaml do MongoDB.
+```
+
+Responsabilidade de cada arquivo Yaml da aplicacao:
+
+```
+Kubernetes/
+    |- namespace.yaml -> Responsavel pela criacao do namespace.
+    |- configmap.yaml -> Responsavel pela criacao do configmap.
+    |- services.yaml -> Responsavel pela criacao do services da aplicacao(NodePort, ClusterIP ou LoadBalancer).
+    |- deployment.yaml -> Responsavel pela criacao do deployment da applicacao.
+    |- ingress.yaml -> Responsavel pela geracao do Ingress da aplicacao.
+```
+> Obs1: Os arquivos contem uma sequencia de numeros iniciais como por exemplo *00-*, para que sejam aplicados na ordem certa, e haja uma organizacao. Como um arquivo yaml, pode depender do recurso existente no outro, e altamente recomendado que seja organizado desta forma.
+> Obs2: Optamos por nao criar o arquivo de *secrets.yaml* e manter no repositorio por questao de seguranca
+
+A todo momento em que for feito uma Build nova da aplicacao estaremos aplicando esses arquivos do Kubernetes, para atualizarmos as imagens, e as configuracoes de cada recurso do EKS.
