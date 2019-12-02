@@ -50,6 +50,22 @@ Após a configuração necessária para o TerraForm acessar a AWS, será necess�
 terraform init  -> Responsável por baixar e preparar todas as dependências do TerraForm.
 terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infraestrutura descrita em cada arquivo TF.
 ```
-> Estes comando devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, seria necessário executar este comando na pasta *Terraform/Global*
+> Estes comando devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, será necessário executar este comando na pasta *Terraform/Global*
 
 Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para armazenar todos os arquivos Tf State, e uma tabela no Dynamo DB para fazer a gestão de cada Locks.
+
+### Serviços
+
+Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de Build deste aplicação. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
+
+Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita uma configuração na tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é reponsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível do AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token).
+
+Para iniciar o processo de criação dos serviços é necessário executar os seguintes comandos:
+
+```
+terraform init  -> Responsável por baixar e preparar todas as dependências do TerraForm.
+terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infraestrutura descrita em cada arquivo TF.
+```
+> Estes comando devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, será necessário executar este comando na pasta *Terraform/Serviços/__(Development/Production)__*, de acordo com qual ambiente deseja provisionar.
+
+Após a finalização da criação dos recursos, será armazenado um arquivo TF State no Backend "S3".
