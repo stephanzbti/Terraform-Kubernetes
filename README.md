@@ -6,18 +6,20 @@ Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que
 
 Para aplicarmos completamente todos os passos necessarios para que o projeto execute corretamente, siga os seguintes passos:
 
-.* [TerraForm](#Terraform)
-..* [Serviços](#Services)
-..* Infra-Estrutura
-.* AWS
-..* CodePipeline
-..* CodeBuild
-.* Kubernetes
-..* Ingress Nginx
-..* Storage Class
-..* MongoDB
-..* Aplicação
-.* Aplicação
+1. [TerraForm](#Terraform)
+    - [Serviços](#TfServices)
+    - [Infra-Estrutura](#TfInfra)
+2. [AWS](#AWS)
+    - [CodePipeline](#AWSCP)
+    - [CodeBuild](#AWSCB)
+    - [EKS](#AWSEKS)
+3. [Kubernetes](#Kubernetes)
+    - [Ingress Nginx](#K8SIN)
+    - [Storage Class](#K8SSC)
+    - [MongoDB](#K8SMDB)
+    - [Aplicação](#K8SA)
+4. [Aplicação](#Application)
+5. [Consideracoes Finais](#LastComment)
 
 #Terraform
 ---
@@ -75,7 +77,7 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 
 Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para armazenar todos os arquivos Tf State, e uma tabela no Dynamo DB para fazer a gestão de cada Locks.
 
-#Services
+#TfServices
 ### Serviços
 
 Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de Build deste aplicação. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
@@ -92,6 +94,7 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 
 Após a finalização da criação dos recursos, será armazenado um arquivo TF State no Backend "S3".
 
+#TfInfra
 ### Infra-Estrutura
 
 Após a criação de todos o processo de Build automatizado, iremos criar a arquitetura necessária para que nossa aplicação seja provisionada. Nesta etapa optamos por utilizar o EKS, pela questão da segurança, praticidade e compatibilidade com os recursos da AWS, além de nos prover uma rápida escalabilidade e uma alta disponibilidade.
@@ -111,10 +114,11 @@ terraform init  -> Responsável por baixar e preparar todas as dependências do 
 terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infraestrutura descrita em cada arquivo TF.
 ```
 > Estes comando devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, será necessário executar este comando na pasta *Terraform/Infraestructure/__(Development/Production)__*, de acordo com qual ambiente deseja provisionar.
+#AWS
 ---
 ## AWS
 ---
- 
+ #AWSCP
 ### CodePipeline
  
 Optamos por utilizar o CodePipeline pela praticidade de integração com todos os recursos da AWS, e fácil integração com o source de nosso projeto, que está hospedado no GitHub. Para utilizarmos ele, usamos o WebHook do GitHub para disparar os Build de forma automatizada, sempre que ocorrer algum push no projeto. Junto com ele utilizamos o CodeBuild, para prover todo o Build automático de nosso projeto.
@@ -124,14 +128,17 @@ O CodePipeline é responsável por gerenciar todo o pipeline de nosso projeto e 
 Para o processo de build, optamos por utilizar o CodeBuild, pela praticidade na integração com o CodePipeline e os recursos da AWS. É necessário apenas escrever um arquivo *buildspec.yml* no projeto e definir todos os passos necessários para o processo de build da aplicação.
 > Este arquivo *buildspec.yml* está definido no root deste repositório, por questões de praticidade. Nas considerações finais, terá uma overview de toda organização deste repositório.
 
+#AWSCB
 #### CodeBuild
  
 Para configuração do CodeBuild, optamos por configurar uma máquina mais lenta para o ambiente de *development* e uma máquina mais poderosa para o ambiente de *production*, por questões de custo. É possível configurar uma rede VPC, para que o CodeBuild tenha acesso a rede interna da AWS, porém optamos por não configurar, pela não necessidade de acesso a alguma aplicação interna.
 
+#AWSEKS
 ### EKS
  
 Optamos pela utilização do EKS para este projeto, graças a sua escalabilidade, alta disponibilidade, divisão de responsabilidade e __segurança__.
- 
+
+#Kubernetes
 ## Kubernetes
  
 O Kubernetes e uma poderosa ferramenta de orquestração de containers, com ela podemos organizar os recursos da melhor maneira e ainda criar *réplicas* de nossas aplicações, para caso ocorra algum desastre a aplicação não fique fora do ar. Além disso, é uma das ferramentas com maior contribuição do GitHub, sendo uma comunidade forte e ativa de desenvolvimento. É possível também desenvolver plugins e serviços, que rodam junto ao Kubernetes e assim automatizar ainda mais todo o ambiente, e um desses exemplos seria o Ingress (Nginx ou ALB), cert-manager(Geração de Certificado Válidos), replicator(Réplica secrets), etc. Ao se utilizar todos os recursos que o Kubernetes nos provê, é possível ter uma infraestrutura pequena, porem com todos os recursos necessários para se executar uma aplicação perfeitamente.
@@ -172,7 +179,8 @@ Para provisionar essa aplicacao de maneira manual, sem o CodeBuild aplicar os ar
 kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atual.
 ```
 > É necessário estar dentro da pasta que deseja aplicar os arquivos ou trocar o __*.*__ pela pasta de destino dos arquivos Yaml, que deseja aplicar.
- 
+
+#K8SIN
 ### Ingress Nginx
  
 Para utilizarmos o Ingress Nginx criamos um LoadBalancer de Layer 7(ALB), o objetivo deste LoadBalancer seria para as requisições possam chegar aos servidores web corretamente, de acordo com as requisições. Para criarmos os recursos necessários para o Kubernetes reconhecer o Ingress Nginx e ele funcionar como um Application Gateway, e necessário aplicar seus arquivos yaml, estes arquivos estão dentro da pasta *Kubernetes/Services/Ingress-Nginx*. Comando necessário para aplicar:
@@ -188,6 +196,7 @@ Essa parte de apontamento do DNS do LoadBalancer no Route53, deverá ser feita m
  
 Com este poderoso LoadBalancer, poderemos configurar uma duas aplicações respondendo para a mesma URL, porém apontando para locais diferentes, como por exemplo: *https://application.onredes.com* (FrontEnd) - *https://application.onredes.com/api* (BackEnd). Utilizando essa ferramenta podemos diminuir os custos de nossas aplicações.
 
+#K8SSC
 ### Storage Class
  
 Ao se trabalhar com o Kubernetes em um provider, e principalmente ao termos o EKS, podemos configurar facilmente a criação de storages quando necessário, para isso é necessário criar classes de Storage, existem algumas que são criadas por padrão, como por exemplo *local*, porém algumas são necessárias criar manualmente, pela quantidade de opções que podemos ter.
@@ -200,7 +209,8 @@ Para aplicarmos os arquivos de configuração do Storage Class, é necessário e
 kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atual.
 ```
 > É necessário estar dentro da pasta *Kubernetes/Services/Storage-Class* ou trocar o __*.*__ por __*Kubernetes/Services/Storage-Class*__.
- 
+
+#K8SMDB
 ### MongoDB
  
 Nossa aplicação necessita de um banco de dados MongoDB para que se provisione corretamente a aplicação. Para isso utilizaremos o Addons do tipo StatefulSet, pela questão de ser um banco de dados de alta disponibilidade e de fácil configuração, unido ao poder do StatefulSet, temos um banco completamente configurado e de alta disponibilidade. Para conhecer mais sobre os [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/).
@@ -212,6 +222,7 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
 ```
 > É necessário estar dentro da pasta *Kubernetes/Services/MongoDB* ou trocar o __*.*__ por __*Kubernetes/Services/MongoDB*__.
 
+#K8SA
 ### Aplicação
  
 Para criarmos os recursos da aplicação no Kubernetes e necessário aplicarmos os arquivos YAML que estão dentro do folder *Application/(FrontEnd/BackEnd)*, estes arquivos irão criar os configmaps, namespaces, serviços, deployments e ingress. Como dito acima optamos por não colocar os secrets no repositório por questão de segurança, por isso será necessário criar manualmente os arquivos. Para isso execute os comandos abaixo:
@@ -224,6 +235,7 @@ kubectl edit secret -n application backend-user
  
 Um importante ponto a ser analisado está nas configurações de imagens do kubernetes, o arquivo YAML de Deployment está configurado para a imagem __*.*__ (pelo qual nao existe), porem ao passar pelo CodeBuild será feito a correção e o deployment seria corrigido com a imagem correta, gerada pelo CodeBuild. Caso deseje pode modificar o arquivo YAML de Deployment para o repositório de imagem correto, o repositório foi gerado automaticamente junto ao CodeBuild e se encontra no ECR, lembre-se de colocar o repositório correto em cada aplicação.
 
+#Application
 ---
 ## Aplicação
 ---
@@ -242,7 +254,7 @@ URL_BASE - URL Base da aplicacao. (Configmap)
 NODE_ENV - Environment da aplicacao. (Configmap)
 PORT - Porta pelo qual ira rodar. (Configmap)
 ```
-
+#LastComment
 ---
 ## Consideracoes Finais
 ---
