@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-user-deployment
+  namespace: application
+  labels:
+    app: backend-user
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0%
+  selector:
+    matchLabels:
+      app: backend-user
+  template:
+    metadata:
+      labels:
+        app: backend-user
+    spec:
+      containers:
+      - name: backend-user
+        image: 588231123606.dkr.ecr.us-east-1.amazonaws.com/hotmart-project-development-backend:hotmart-project-latest
+        env:
+          - name: SECRET_OR_KEY
+            valueFrom:
+              secretKeyRef:
+                name: backend-user
+                key: SECRET_OR_KEY
+          - name: MONGO_URI
+            valueFrom:
+              secretKeyRef:
+                name: backend-user
+                key: MONGO_URI
+          - name: URL_BASE
+            valueFrom:
+              configMapKeyRef:
+                name: backend-user
+                key: URL_BASE
+          - name: NODE_ENV
+            valueFrom:
+              configMapKeyRef:
+                name: backend-user
+                key: NODE_ENV
+          - name: PORT
+            valueFrom:
+              configMapKeyRef:
+                name: backend-user
+                key: PORT
+          - name: SERVER_TYPE
+            valueFrom:
+              configMapKeyRef:
+                name: backend-user
+                key: SERVER_TYPE
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 80
+          initialDelaySeconds: 80
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          successThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "128m"
+          limits:
+            memory: "512Mi"
+            cpu: "256m"
+      imagePullSecrets:
+        - name: aws-registry
