@@ -77,7 +77,7 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 
 Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para armazenar todos os arquivos Tf State, e uma tabela no Dynamo DB para fazer a gestão de cada Locks.
 
-#TfServices
+##TfServices
 ### Serviços
 
 Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de Build deste aplicação. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
@@ -118,7 +118,7 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 ---
 ## AWS
 ---
- #AWSCP
+#AWSCP
 ### CodePipeline
  
 Optamos por utilizar o CodePipeline pela praticidade de integração com todos os recursos da AWS, e fácil integração com o source de nosso projeto, que está hospedado no GitHub. Para utilizarmos ele, usamos o WebHook do GitHub para disparar os Build de forma automatizada, sempre que ocorrer algum push no projeto. Junto com ele utilizamos o CodeBuild, para prover todo o Build automático de nosso projeto.
