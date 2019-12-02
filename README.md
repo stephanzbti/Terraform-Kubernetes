@@ -138,6 +138,7 @@ Kubernetes/
     |- ingress.yaml -> Responsavel pela geracao do Ingress da aplicacao.
 ```
 > Obs1: Os arquivos contem uma sequencia de numeros iniciais como por exemplo *00-*, para que sejam aplicados na ordem certa, e haja uma organizacao. Como um arquivo yaml, pode depender do recurso existente no outro, e altamente recomendado que seja organizado desta forma.
-> Obs2: Optamos por nao criar o arquivo de *secrets.yaml* e manter no repositorio por questao de seguranca
+
+> Obs2: Optamos por nao criar o arquivo de *secrets.yaml* e manter no repositorio por questao de seguranca. E altamente recomendado que seja utilizado um servico de secrets dinamica, como secret manager, vault, para que as secrets, fiquem armazenadas em um local seguro e com acesso restrito. 
 
 A todo momento em que for feito uma Build nova da aplicacao estaremos aplicando esses arquivos do Kubernetes, para atualizarmos as imagens, e as configuracoes de cada recurso do EKS.
