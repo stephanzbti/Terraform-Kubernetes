@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const passport = require("passport");
+const settings = require("./config/keys")
 
 // Load Profile and User Module
 const Profile = require("../../models/Profile");
