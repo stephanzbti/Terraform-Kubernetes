@@ -218,6 +218,7 @@ kubectl edit secret -n application backend-user
 > Optamos por criar a secret e depois modificá ela pela facilidade que teríamos utilizando um editor de texto simples, do que linha de comando. Como a Secret utiliza Base64 para armazenar suas informações, este processo se torna oneroso se fizermos por linha de comando diretamente.
  
 Um importante ponto a ser analisado está nas configurações de imagens do kubernetes, o arquivo YAML de Deployment está configurado para a imagem __*.*__ (pelo qual nao existe), porem ao passar pelo CodeBuild será feito a correção e o deployment seria corrigido com a imagem correta, gerada pelo CodeBuild. Caso deseje pode modificar o arquivo YAML de Deployment para o repositório de imagem correto, o repositório foi gerado automaticamente junto ao CodeBuild e se encontra no ECR, lembre-se de colocar o repositório correto em cada aplicação.
+
 ---
 ## Aplicação
 ---
