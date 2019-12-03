@@ -18,8 +18,8 @@ phases:
   pre_build:
     commands:
       - echo Starting apply TerraForm files
-      - terraform init ./Terraform/Infraestructure/$TERRAFORM_ENVIRONMENT/
-      - terraform apply -auto-approve ./Terraform/Infraestructure/$TERRAFORM_ENVIRONMENT/
+      - terraform init ./Terraform/Infraestructure/$ENVIRONMENT/
+      - terraform apply -auto-approve ./Terraform/Infraestructure/$ENVIRONMENT/
       - echo Configure EKS kubectl
       - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
       - echo Provisioning resource on EKS
@@ -27,8 +27,8 @@ phases:
       - kubectl apply -f ./Kubernetes/Services/MongoDB/
       - kubectl apply -f ./Kubernetes/Services/Storage-Class/
       - echo Provisioning Application on EKS
-      - kubectl apply -f ./Kubernetes/Application/BackEnd/$TERRAFORM_ENVIRONMENT/
-      - kubectl apply -f ./Kubernetes/Application/FrontEnd/$TERRAFORM_ENVIRONMENT/
+      - kubectl apply -f ./Kubernetes/Application/BackEnd/$ENVIRONMENT/
+      - kubectl apply -f ./Kubernetes/Application/FrontEnd/$ENVIRONMENT/
       - echo Logging in to Amazon ECR...
       - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)

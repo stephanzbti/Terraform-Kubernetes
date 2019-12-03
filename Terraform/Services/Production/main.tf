@@ -41,7 +41,7 @@ locals {
     OAuthToken  = ""
   }
   cluster_name  = "K8s-Hotmart-Production"
-  terraform_environment = "Production"
+  environment_path   = "Production"
 }
 
 data "aws_kms_key" "s3_kms_key" {
@@ -71,7 +71,7 @@ module "codebuild" {
   ecr_terraform     =   module.ecr.ecr_terraform
   environment       =   local.environment
   cluster_name      =   local.cluster_name
-  terraform_environment = local.terraform_environment
+  environment_path  =   local.environment_path 
 }
 
 module "codepipeline" {

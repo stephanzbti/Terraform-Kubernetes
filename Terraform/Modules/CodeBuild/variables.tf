@@ -28,8 +28,8 @@ variable "compute_type" {
   type        = string
 }
 
-variable "terraform_environment" {
-  description = "CodeBuild - Terraform Environment"
+variable "environment_path" {
+  description = "CodeBuild - Environment Path"
   type        = string
 }
 

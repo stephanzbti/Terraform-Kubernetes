@@ -187,8 +187,8 @@ resource "aws_codebuild_project" "codebuild_project" {
     } 
 
     environment_variable {
-      name  = "TERRAFORM_ENVIRONMENT"
-      value = var.terraform_environment
+      name  = "ENVIRONMENT"
+      value = var.environment_path
     } 
   }
 
