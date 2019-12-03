@@ -162,8 +162,8 @@ Os arquivos Kubernetes deste projeto estão armazenados na pasta *Kubernetes/*, 
 ```
 Kubernetes/
     |- Application/ -> Responsável por armazenar todos os arquivos yaml das aplicações deste projeto.
-    |    |- FrontEnd/ -> Arquivos yaml do FrontEnd.
-    |    |- BackEnd/ -> Arquivos yaml do BackEnd.
+    |    |- Development/ -> Arquivos yaml do ambiente de Development.
+    |    |- Production/ -> Arquivos yaml do ambiente de Production.
     |- Services/ -> Responsável por armazenar toda a infraestrutura de serviços necessários para a aplicação executar.
     |    |- Ingress-Nginx/ -> Arquivos yaml do Ingress Nginx.
     |    |- MongoDB/ -> Arquivos yaml do MongoDB.
@@ -202,7 +202,7 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
 ```
 > É necessário estar dentro da pasta *Kubernetes/Services/Ingress-Nginx* ou trocar o __*.*__ por __*Kubernetes/Services/Ingress-Nginx*__.
  
-Após aplicarmos corretamente os arquivos de configuração do Ingress Nginx e o LoadBalancer estiver criado corretamente, teremos um acesso às aplicações que estiverem hospedadas no Kubernetes, sendo necessário apenas configurar no DNS para apontar para o DNS do LoadBalancer criado. Caso não saiba apontar no Route 53, veja este [tutorial](https://docs.aws.amazon.com/pt_br/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html). Após fazer essa apontamento no Route53 é necessário fazer a correção nos arquivos *ingress.yaml*, que estão em *Kubernetes/Application/(BackEnd/FrontEnd)/(Development/Production)*, para o Zone criada pelo TerraForm, criando assim o Sub Dominio desejado para acessar a aplicação, já existe um exemplo no arquivo, será necessário apenas substituir pelo desejado.
+Após aplicarmos corretamente os arquivos de configuração do Ingress Nginx e o LoadBalancer estiver criado corretamente, teremos um acesso às aplicações que estiverem hospedadas no Kubernetes, sendo necessário apenas configurar no DNS para apontar para o DNS do LoadBalancer criado. Caso não saiba apontar no Route 53, veja este [tutorial](https://docs.aws.amazon.com/pt_br/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html). Após fazer essa apontamento no Route53 é necessário fazer a correção nos arquivos *ingress.yaml*, que estão em *Kubernetes/Application/(Development/Production)*, para o Zone criada pelo TerraForm, criando assim o Sub Dominio desejado para acessar a aplicação, já existe um exemplo no arquivo, será necessário apenas substituir pelo desejado.
  
 Essa parte de apontamento do DNS do LoadBalancer no Route53, deverá ser feita manualmente, pois essa parte ainda não está automatizada neste processo. Uma forma de automatizar esse processo seria criando um serviço que rodaria junto ao Ingress e ele automaticamente registraria no Route53 a todo momento que for criado um novo Ingress no Kubernetes, dessa forma seria necessário apenas a criação do Ingress, sem a necessidade de criar no Route53, em *Python* uma aplicação deste porte seria feita rapidamente, recomendo que leia sobre a documentacao do [Boto3](https://github.com/boto/boto3) e [Kubernetes-Client Python](https://github.com/kubernetes-client/python), em outro momento irei criar um repositório com a aplicação que gerencia essa parte.
  
@@ -240,12 +240,12 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
  
 ### Aplicação
  
-Para criarmos os recursos da aplicação no Kubernetes é necessário aplicarmos os arquivos YAML que estão dentro do folder *Application/(FrontEnd/BackEnd)*, estes arquivos irão criar os configmaps, secrets, namespaces, serviços, deployments e ingress. Para isso execute o comando abaixo:
+Para criarmos os recursos da aplicação no Kubernetes é necessário aplicarmos os arquivos YAML que estão dentro do folder *Application/(Development/Production)*, estes arquivos irão criar os configmaps, secrets, namespaces, serviços, deployments e ingress. Para isso execute o comando abaixo:
  
 ```
 kubectl apply -f .
 ```
-> É necessário estar dentro da pasta *Kubernetes/Services/MongoDB* ou trocar o __*.*__ por __*Kubernetes/Application/(BackEnd/FrontEnd)/(Development/Production)*__.
+> É necessário estar dentro da pasta *Kubernetes/Services/MongoDB* ou trocar o __*.*__ por __*Kubernetes/Application//(Development/Production)*__.
  
 Um importante ponto a ser analisado está nas configurações de imagens do kubernetes, o arquivo YAML de Deployment está configurado para a imagem __*.*__ (pelo qual nao existe), porem ao passar pelo CodeBuild será feito a correção e o deployment seria corrigido com a imagem correta, gerada pelo CodeBuild. Caso deseje pode modificar o arquivo YAML de Deployment para o repositório de imagem correto, o repositório foi gerado automaticamente junto ao CodeBuild e se encontra no ECR, lembre-se de colocar o repositório correto em cada aplicação.
  
