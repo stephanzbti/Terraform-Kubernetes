@@ -1,6 +1,6 @@
 # Terraform + CodePipeline + EKS
  
-Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-code (IaC), de um projeto provisionado totalmente na AWS, utilizando seus recursos de forma prática e explicita. Neste projeto abordaremos o Terraform, armazenando seus arquivos no S3, e provisionando totalmente a infra necessária para que a aplicação execute perfeitamente, além disto, utilizaremos os recursos do CodePipeline e CodeBuild, para fazer a automatização dos builds, teste, deployments, e provisãpo de recursos na nuvem.
+Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-code (IaC), de um projeto provisionado totalmente na AWS, utilizando seus recursos de forma prática e explicita. Neste projeto abordaremos o Terraform, armazenando seus arquivos no S3, e provisionando totalmente a infra necessária para que a aplicação execute perfeitamente, além disto, utilizaremos os recursos do CodePipeline e CodeBuild, para fazer a automatização dos builds, teste, deployments, e provisão de recursos na nuvem.
  
 Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que será criada pelo nosso arquivo do Terraform. Todos os passos necessários para a execução deste projeto estão descritos abaixo. Caso deseje ter um conhecimento mais a fundo do Terraform e da AWS e seus recursos, recomendo que leia a documentação de ambas as plataformas.
  
@@ -83,13 +83,13 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 ```
 > Estes comandos devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, será necessário executar este comando na pasta *Terraform/Global*
  
-Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para armazenar todos os arquivos Tf State, e uma tabela no Dynamo DB para fazer a gestão de cada Locks.
+Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para armazenar todos os arquivos Tf State, uma tabela no Dynamo DB para fazer a gestão de cada Locks e uma chave KMS, para criptografar os arquivos quando necessários.
  
 ### Serviços
  
 Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de build e provisão de recursos deste projeto. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
  
-Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita uma configuração na tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é responsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível o AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token).
+Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita duas configurações nos arquivos TF File. A primeira será necessário modificar a tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é responsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível o AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token). A segunda modificação, consiste em modificar o arquivo *main.tf*, existente na pasta __*Terraforms/Services/(Development/Production)*__, colocando o valor da chave KMS criada anteriomente, na __*linha 48*__.
  
 Para iniciar o processo de criação dos serviços é necessário executar os seguintes comandos:
  
