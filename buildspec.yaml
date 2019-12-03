@@ -19,7 +19,7 @@ phases:
     commands:
       - echo Starting apply TerraForm files
       - terraform init ./Terraform/Infraestructure/$TERRAFORM_ENVIRONMENT/
-      - terraform apply ./Terraform/Infraestructure/$TERRAFORM_ENVIRONMENT/ -auto-approve
+      - terraform apply -auto-approve ./Terraform/Infraestructure/$TERRAFORM_ENVIRONMENT/
       - echo Configure EKS kubectl
       - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
       - echo Provisioning resource on EKS
