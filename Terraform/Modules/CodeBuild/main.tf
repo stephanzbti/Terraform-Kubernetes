@@ -196,7 +196,7 @@ resource "aws_codebuild_project" "codebuild_project" {
 
     environment_variable {
       name  = "EKS_CLUSTER_NAME"
-      value = var.cluster_name
+      value = "${var.cluster_name}-${var.environment}"
     } 
 
     environment_variable {
