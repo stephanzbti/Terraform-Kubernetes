@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: frontend-user
-        imagePullPolicy: always
+        imagePullPolicy: Always
         image: .
         ports:
         - containerPort: 80

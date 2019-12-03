@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: backend-user
-        imagePullPolicy: always
+        imagePullPolicy: Always
         image: .
         env:
           - name: SECRET_OR_KEY
