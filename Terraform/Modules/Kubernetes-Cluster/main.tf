@@ -129,7 +129,7 @@ resource "aws_subnet" "nodegroup_subnet2" {
 */
 
 resource "aws_iam_role" "eks_cluster_nodegroup" {
-  name = "eks-node-group-role"
+  name = "${aws_eks_cluster.kubernetes_cluster.name}-node-group-role"
 
   assume_role_policy = jsonencode({
     Statement = [{
