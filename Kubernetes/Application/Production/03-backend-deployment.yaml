@@ -59,13 +59,13 @@ spec:
         - containerPort: 80
         livenessProbe:
           httpGet:
-            path: /api/health
+            path: /api/post/health
             port: 80
           initialDelaySeconds: 80
           periodSeconds: 30
         readinessProbe:
           httpGet:
-            path: /api/health
+            path: /api/post/health
             port: 80
           initialDelaySeconds: 30
           periodSeconds: 15
@@ -79,3 +79,4 @@ spec:
             cpu: "256m"
       imagePullSecrets:
         - name: aws-registry
+---

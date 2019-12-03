@@ -3,13 +3,16 @@
 Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-code (IaC), de um projeto provisionado totalmente na AWS, utilizando seus recursos de forma prática e explicita. Neste projeto abordaremos o Terraform, armazenando seus arquivos no S3, e provisionando totalmente a infra necessária para que a aplicação execute perfeitamente, além disto, utilizaremos os recursos do CodePipeline e CodeBuild, para fazer a automatização dos builds, teste, deployments, e provisão de recursos na nuvem.
  
 Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que será criada pelo nosso arquivo do Terraform. Todos os passos necessários para a execução deste projeto estão descritos abaixo. Caso deseje ter um conhecimento mais a fundo do Terraform e da AWS e seus recursos, recomendo que leia a documentação de ambas as plataformas.
- 
+
+As regras necessárias para criar cada recurso, estão descritas no final desta documentação, atualmente estamos utilizando a política *AdminAccess* para facilitar a criação, porém é altamente recomendado que seja utilizado as políticas descritas abaixo.
+
 Para aplicarmos completamente todos os passos necessários para que o projeto execute corretamente, de forma automatizada, siga os seguintes passos:
  
 1. [TerraForm](#Terraform)
     - Serviços
 2. [Kubernetes](#Kubernetes)
     - Ingress Nginx
+3. [Consideracoes Finais](#LastComment)
 
 Caso deseje fazer o processo manualmente de criação de cada parte dos recursos, provisionamento da aplicação e entender de forma detalhada de como funciona cada parte do processo, siga os pasos abaixo:
 
@@ -58,7 +61,7 @@ Terraform/
     |    |-  Production/ -> Serviços do ambiente de Produção.
 ```
 > Foram cortados os arquivos *variables.tf*, *outputs.tf*, *main.tf*, pois todos consistem na mesma abordagem: Entrada de valores, saída de valores e criação de recursos.
- 
+
 Utilizamos o Backend "S3", para armazenarmos os arquivos TF States, gerados em todos os momentos que é feito algum _terraform apply_, para que em qualquer momento tenhamos acesso a estes arquivos, e dessa forma o TerraForm possa controlar todos os recursos que já foram criados por ele.
  
 Utilizamos também o DynamoDB, para fazermos a gestão dos Locks que o TerraForm necessita. Estes Locks, servem para o caso de termos 2 equipes executando um *apply*, do mesmo TF File, no mesmo instante, o que poderia gerar problemas e assim ambos os *apply* falharem ou duplicarem a infra. Estes Locks, bloqueiam a execução de um *apply* simultâneo.
@@ -75,6 +78,14 @@ Estas variáveis de ambiente são responsável por conceder o acesso a AWS e per
  
 Por padrão este projeto está configurado para criar um bucket com o nome __*terraform-state-files-hotmart*__, caso deseje mudar o nome do Bucket ou caso de erro na criação por duplicidade no nome do Bucket, recomendo que edite os arquivos __*main.tf*__, das pastas *Infraestructure/(Development/Production)* e *Services/(Development/Production)*, na tag __*Terraform{ backend "s3" {}}*__ para o novo nome de Bucket desejado.
  
+Caso deseje existe um Dockfile na pasta */Terraform*, pelo qual está configurado para instalar o Terraform e inicializar a automação do projeto, caso deseje você pode executa-la por terminal. Para utilizar essa imagem, basta digitar os seguintes comandos:
+
+```
+docker build -t terraform:1 --build-arg AWS_ACCESS_KEY_ID="" --build-arg AWS_SECRET_ACCESS_KEY="" --build-arg AWS_DEFAULT_REGION="" ./Terraform/ -> Sendo necessário colocar os valores correto em cada variaveis de ambiente.
+docker run -ti terraform:1 bash -> Caso deseje acessar a imagem via terminal. 
+```
+
+
 Após a configuração necessária para o TerraForm acessar a AWS, será necessária a execução de dois comandos TerraForm, sendo eles:
  
 ```
@@ -89,8 +100,8 @@ Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para a
  
 Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de build e provisão de recursos deste projeto. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
  
-Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita duas configurações nos arquivos TF File. A primeira será necessário modificar a tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é responsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível o AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token). A segunda modificação, consiste em modificar o arquivo *main.tf*, existente na pasta __*Terraforms/Services/(Development/Production)*__, na __*linha 48*__., colocando o valor da chave KMS criada anteriomente
- 
+Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita duas configurações nos arquivos TF File. A primeira será necessário modificar a tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é responsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível o AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token). A segunda modificação, consiste em modificar o arquivo *main.tf*, existente na pasta __*Terraforms/Services/(Development/Production)*__, na __*linha 48*__, colocando o valor da chave KMS criada anteriomente.
+
 Para iniciar o processo de criação dos serviços é necessário executar os seguintes comandos:
  
 ```
@@ -111,7 +122,7 @@ Criado o EKS, é necessário que seja criado o Node Group(Workes), para que tenh
  
 Neste projeto temos os arquivos TF Files necessários para criarmos automaticamente todo o EKS, sendo desde a parte do VPC, Node Group e Route53. Dentro da pasta *Infraestructure/(Development/Production)*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo. Caso deseje modificar o VPC gerado, é necessário modificar apenas o *main.tf* que está dentro da pasta *Infraestructure/(Development/Production)/vpc*.
  
-Optamos por criar automaticamente o Route53, sendo ele gerado a partir dos valores configurados para a criação do EKS. O DNS criado teria o nome: *{cluster_name}-{environment}.{user_identity}.{aws_region}.com*, gerando também os certificados WildCard pelo Certificate Manager, ficando **.{cluster_name}-{environment}.{user_identity}.{aws_region}.com*. Este DNS criado, será utilizado para o acesso a aplicação.
+Optamos por criar automaticamente o Route53, sendo ele gerado a partir dos valores configurados para a criação do EKS. O DNS criado teria o nome: *{environment}.{cluster_name}.{user_identity}.{aws_region}.com*, gerando também os certificados WildCard pelo Certificate Manager, ficando **.{environment}.{cluster_name}.{user_identity}.{aws_region}.com*. Este DNS criado, será utilizado para o acesso a aplicação.
 
 Para iniciar o processo de criação dos serviços é necessário executar os seguintes comandos:
  
@@ -159,8 +170,8 @@ Os arquivos Kubernetes deste projeto estão armazenados na pasta *Kubernetes/*, 
 ```
 Kubernetes/
     |- Application/ -> Responsável por armazenar todos os arquivos yaml das aplicações deste projeto.
-    |    |- FrontEnd/ -> Arquivos yaml do FrontEnd.
-    |    |- BackEnd/ -> Arquivos yaml do BackEnd.
+    |    |- Development/ -> Arquivos yaml do ambiente de Development.
+    |    |- Production/ -> Arquivos yaml do ambiente de Production.
     |- Services/ -> Responsável por armazenar toda a infraestrutura de serviços necessários para a aplicação executar.
     |    |- Ingress-Nginx/ -> Arquivos yaml do Ingress Nginx.
     |    |- MongoDB/ -> Arquivos yaml do MongoDB.
@@ -170,15 +181,16 @@ Responsabilidade de cada arquivo Yaml da aplicação:
  
 ```
 Kubernetes/
-    |- namespace.yaml -> Responsavel pela criacao do namespace.
-    |- configmap.yaml -> Responsavel pela criacao do configmap.
-    |- services.yaml -> Responsavel pela criacao do services da aplicação(NodePort, ClusterIP ou LoadBalancer).
+    |- namespace.yaml -> Responsável pela criacao do namespace.
+    |- configmap.yaml -> Responsável pela criacao do configmap.
+    |- secrets.yaml -> Responsável por armazenar as secrets do projeto.
+    |- services.yaml -> Responsável pela criacao do services da aplicação(NodePort, ClusterIP ou LoadBalancer).
     |- deployment.yaml -> Responsável pela criação do deployment da aplicação.
     |- ingress.yaml -> Responsável pela geração do Ingress da aplicação.
 ```
 > Obs1: Os arquivos contêm uma sequência de números iniciais como por exemplo *00-*, para que sejam aplicados na ordem certa, e haja uma organização. Como um arquivo yaml, pode depender do recurso existente no outro, e altamente recomendado que seja organizado desta forma.
  
-> Obs2: Optamos por não criar o arquivo de *secrets.yaml* e manter no repositório por questão de segurança. É altamente recomendado que seja utilizado um serviço de secrets dinâmico, como secret manager, vault, etc, para que as secrets fiquem armazenadas em um local seguro e com acesso restrito. 
+> Obs2: Optamos por criar o arquivo de *secrets.yaml*. É altamente recomendado que seja utilizado um serviço de secrets dinâmico, como secret manager, vault, etc, para que as secrets fiquem armazenadas em um local seguro e com acesso restrito, podendo gerar problemas caso esteja no repositório. 
  
 A todo momento em que for feito uma Build nova da aplicação estaremos aplicando esses arquivos do Kubernetes, para atualizarmos as configurações de cada recurso do EKS.
  
@@ -191,14 +203,14 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
  
 ### Ingress Nginx
  
-Para utilizarmos o Ingress Nginx criamos um LoadBalancer de Layer 7(ALB), o objetivo deste LoadBalancer será para que as requisições possam chegar aos servidores web corretamente. Para criarmos os recursos necessários para o Kubernetes reconhecer o Ingress Nginx e ele funcionar como um Application Gateway, e necessário aplicar seus arquivos yaml, estes arquivos estão dentro da pasta *Kubernetes/Services/Ingress-Nginx*. Comando necessário para aplicar:
+Para utilizarmos o Ingress Nginx criamos um LoadBalancer de Layer 3(ELB), o objetivo deste LoadBalancer será para que as requisições possam chegar aos servidores web corretamente. Para criarmos os recursos necessários para o Kubernetes reconhecer o Ingress Nginx e ele funcionar como um Application Gateway, e necessário aplicar seus arquivos yaml, estes arquivos estão dentro da pasta *Kubernetes/Services/Ingress-Nginx*. Comando necessário para aplicar:
  
 ```
 kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atual.
 ```
 > É necessário estar dentro da pasta *Kubernetes/Services/Ingress-Nginx* ou trocar o __*.*__ por __*Kubernetes/Services/Ingress-Nginx*__.
  
-Após aplicarmos corretamente os arquivos de configuração do Ingress Nginx e o LoadBalancer estiver criado corretamente, teremos um acesso às aplicações que estiverem hospedadas no Kubernetes, sendo necessário apenas configurar no DNS para apontar para o DNS do LoadBalancer criado. Caso não saiba apontar no Route 53, veja este [tutorial](https://docs.aws.amazon.com/pt_br/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html).
+Após aplicarmos corretamente os arquivos de configuração do Ingress Nginx e o LoadBalancer estiver criado corretamente, teremos um acesso às aplicações que estiverem hospedadas no Kubernetes, sendo necessário apenas configurar no DNS para apontar para o DNS do LoadBalancer criado. Caso não saiba apontar no Route 53, veja este [tutorial](https://docs.aws.amazon.com/pt_br/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html). Após fazer essa apontamento no Route53 é necessário fazer a correção nos arquivos *ingress.yaml*, que estão em *Kubernetes/Application/(Development/Production)*, para o Zone criada pelo TerraForm, criando assim o Sub Dominio desejado para acessar a aplicação, já existe um exemplo no arquivo, será necessário apenas substituir pelo desejado.
  
 Essa parte de apontamento do DNS do LoadBalancer no Route53, deverá ser feita manualmente, pois essa parte ainda não está automatizada neste processo. Uma forma de automatizar esse processo seria criando um serviço que rodaria junto ao Ingress e ele automaticamente registraria no Route53 a todo momento que for criado um novo Ingress no Kubernetes, dessa forma seria necessário apenas a criação do Ingress, sem a necessidade de criar no Route53, em *Python* uma aplicação deste porte seria feita rapidamente, recomendo que leia sobre a documentacao do [Boto3](https://github.com/boto/boto3) e [Kubernetes-Client Python](https://github.com/kubernetes-client/python), em outro momento irei criar um repositório com a aplicação que gerencia essa parte.
  
@@ -208,7 +220,7 @@ Caso optassem por utilizar o ALB, poderíamos gerar ele automaticamente pelo Ter
 
 Para configurar o certificado criado pelo Certificate Manager no LoadBalancer do Ingress é necessário editar o arquivo *02-services.yaml*, que está dentro da pasta *Kubernetes/Ingress-Nginx*, descomentando a __linha 11__ e substituindo o arn existente, pelo gerado do Certificar Manager, gerado pelo TerraForm, após isso todas as requisições provenientes a porta 443 do LoadBalancer irão conter certificados HTTPs.
 
-> Caso deseje utilizar um ALB no lugar de um Ingress Nginx, estará disponível está configuração na branch __*release/terraform*__. Lá você terá um exemplo completo utilizando o TerraForm, LoadBalancer, sem a necessidade do Nginx Ingress.
+> __Caso deseje utilizar um ALB no lugar de um Ingress Nginx, estará disponível na branch *release/terraform*. Lá você terá um exemplo completo utilizando o TerraForm, LoadBalancer, sem a necessidade do Nginx Ingress.__
 
 ### Storage Class
  
@@ -236,13 +248,12 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
  
 ### Aplicação
  
-Para criarmos os recursos da aplicação no Kubernetes é necessário aplicarmos os arquivos YAML que estão dentro do folder *Application/(FrontEnd/BackEnd)*, estes arquivos irão criar os configmaps, namespaces, serviços, deployments e ingress. Como dito acima optamos por não colocar os secrets no repositório por questão de segurança, por isso será necessário criar manualmente os arquivos. Para isso execute os comandos abaixo:
+Para criarmos os recursos da aplicação no Kubernetes é necessário aplicarmos os arquivos YAML que estão dentro do folder *Application/(Development/Production)*, estes arquivos irão criar os configmaps, secrets, namespaces, serviços, deployments e ingress. Para isso execute o comando abaixo:
  
 ```
-kubectl create secret generic -n application backend-user
-kubectl edit secret -n application backend-user
+kubectl apply -f .
 ```
-> Optamos por criar a secret e depois modificar, pela facilidade que teríamos utilizando um editor de texto simples, do que linha de comando. Como a Secret utiliza Base64 para armazenar suas informações, este processo se torna oneroso se fizermos por linha de comando diretamente.
+> É necessário estar dentro da pasta *Kubernetes/Services/MongoDB* ou trocar o __*.*__ por __*Kubernetes/Application//(Development/Production)*__.
  
 Um importante ponto a ser analisado está nas configurações de imagens do kubernetes, o arquivo YAML de Deployment está configurado para a imagem __*.*__ (pelo qual nao existe), porem ao passar pelo CodeBuild será feito a correção e o deployment seria corrigido com a imagem correta, gerada pelo CodeBuild. Caso deseje pode modificar o arquivo YAML de Deployment para o repositório de imagem correto, o repositório foi gerado automaticamente junto ao CodeBuild e se encontra no ECR, lembre-se de colocar o repositório correto em cada aplicação.
  
@@ -519,6 +530,7 @@ Optamos por utilizar um IAM de Administrador, pela praticidade que isso pode nos
     ]
 }
 ```
+
 ### ECR
 ```
 {
@@ -748,19 +760,154 @@ Optamos por utilizar um IAM de Administrador, pela praticidade que isso pode nos
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Sid": "VisualEditor0",
             "Effect": "Allow",
             "Action": [
-                "iam:*",
-                "organizations:DescribeAccount",
-                "organizations:DescribeOrganization",
-                "organizations:DescribeOrganizationalUnit",
-                "organizations:DescribePolicy",
-                "organizations:ListChildren",
-                "organizations:ListParents",
-                "organizations:ListPoliciesForTarget",
-                "organizations:ListRoots",
-                "organizations:ListPolicies",
-                "organizations:ListTargetsForPolicy"
+                "iam:UpdateAssumeRolePolicy",
+                "iam:GetPolicyVersion",
+                "iam:DeleteAccessKey",
+                "iam:ListRoleTags",
+                "iam:DeleteGroup",
+                "iam:RemoveRoleFromInstanceProfile",
+                "iam:UpdateGroup",
+                "iam:CreateRole",
+                "iam:AttachRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:CreateLoginProfile",
+                "iam:DetachRolePolicy",
+                "iam:SimulatePrincipalPolicy",
+                "iam:ListAttachedRolePolicies",
+                "iam:DetachGroupPolicy",
+                "iam:ListRolePolicies",
+                "iam:DetachUserPolicy",
+                "iam:PutGroupPolicy",
+                "iam:UpdateLoginProfile",
+                "iam:UpdateServiceSpecificCredential",
+                "iam:GetRole",
+                "iam:CreateGroup",
+                "iam:GetPolicy",
+                "iam:UpdateUser",
+                "iam:GetAccessKeyLastUsed",
+                "iam:ListEntitiesForPolicy",
+                "iam:DeleteUserPolicy",
+                "iam:AttachUserPolicy",
+                "iam:DeleteRole",
+                "iam:UpdateRoleDescription",
+                "iam:UpdateAccessKey",
+                "iam:GetUserPolicy",
+                "iam:ListGroupsForUser",
+                "iam:DeleteServiceLinkedRole",
+                "iam:GetGroupPolicy",
+                "iam:GetRolePolicy",
+                "iam:CreateInstanceProfile",
+                "iam:UntagRole",
+                "iam:PutRolePermissionsBoundary",
+                "iam:TagRole",
+                "iam:DeletePolicy",
+                "iam:DeleteRolePermissionsBoundary",
+                "iam:CreateUser",
+                "iam:GetGroup",
+                "iam:CreateAccessKey",
+                "iam:ListInstanceProfilesForRole",
+                "iam:AddUserToGroup",
+                "iam:RemoveUserFromGroup",
+                "iam:GenerateOrganizationsAccessReport",
+                "iam:DeleteRolePolicy",
+                "iam:ListAttachedUserPolicies",
+                "iam:ListAttachedGroupPolicies",
+                "iam:CreatePolicyVersion",
+                "iam:DeleteLoginProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:GetInstanceProfile",
+                "iam:ListGroupPolicies",
+                "iam:PutUserPermissionsBoundary",
+                "iam:DeleteUser",
+                "iam:DeleteUserPermissionsBoundary",
+                "iam:ListUserPolicies",
+                "iam:ListInstanceProfiles",
+                "iam:TagUser",
+                "iam:CreatePolicy",
+                "iam:UntagUser",
+                "iam:CreateServiceLinkedRole",
+                "iam:ListPolicyVersions",
+                "iam:AttachGroupPolicy",
+                "iam:PutUserPolicy",
+                "iam:UpdateRole",
+                "iam:GetUser",
+                "iam:DeleteGroupPolicy",
+                "iam:DeletePolicyVersion",
+                "iam:SetDefaultPolicyVersion",
+                "iam:ListUserTags"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:policy/*",
+                "arn:aws:iam::*:instance-profile/*",
+                "arn:aws:iam::*:user/*",
+                "arn:aws:iam::*:role/*",
+                "arn:aws:iam::*:access-report/*",
+                "arn:aws:iam::*:group/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GenerateCredentialReport",
+                "iam:ListPolicies",
+                "iam:GetAccountPasswordPolicy",
+                "iam:DeleteAccountPasswordPolicy",
+                "iam:ListPoliciesGrantingServiceAccess",
+                "iam:ListRoles",
+                "iam:SimulateCustomPolicy",
+                "iam:UpdateAccountPasswordPolicy",
+                "iam:CreateAccountAlias",
+                "iam:ListAccountAliases",
+                "iam:ListUsers",
+                "iam:ListGroups",
+                "iam:DeleteAccountAlias",
+                "iam:GetAccountAuthorizationDetails"
+            ],
+            "Resource": "*"
+        }
+    ]
+}   
+```
+
+### DynamoDB
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UntagResource",
+                "dynamodb:DeleteItem",
+                "dynamodb:CreateTableReplica",
+                "dynamodb:DeleteTableReplica",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteTable",
+                "dynamodb:CreateTable",
+                "dynamodb:TagResource",
+                "dynamodb:DescribeTable",
+                "dynamodb:GetItem",
+                "dynamodb:UpdateTable",
+                "dynamodb:DescribeTableReplicaAutoScaling"
+            ],
+            "Resource": "arn:aws:dynamodb:*:*:table/*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:ListTables",
+                "dynamodb:DescribeReservedCapacity",
+                "dynamodb:DescribeLimits",
+                "dynamodb:ListStreams"
             ],
             "Resource": "*"
         }
