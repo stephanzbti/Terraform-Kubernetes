@@ -182,7 +182,7 @@ resource "aws_codebuild_project" "codebuild_project" {
     } 
 
     environment_variable {
-      name  = "ESK_CLUSTER_NAME"
+      name  = "EKS_CLUSTER_NAME"
       value = var.cluster_name
     } 
   }
