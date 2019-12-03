@@ -7,8 +7,4 @@ resource "aws_acm_certificate" "certificate" {
   validation_method = "DNS"
 
   tags = var.tag
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }

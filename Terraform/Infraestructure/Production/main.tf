@@ -29,10 +29,14 @@ locals {
         Project     = "Hotmart Teste DevOps 2019"
         Environment = "Production"
     }
-    environment     = "Production"
-    cluster_name    = "Kubernetes-Hotmart"
+    environment     = "production"
+    cluster_name    = "k8s-hotmart"
     instance_type   = [ "c5.large" ]
+    dns             = "${local.environment}.${local.cluster_name}.${data.aws_caller_identity.user_identity.account_id}.${data.aws_region.user_identity_region.name}.com"
 }
+
+data "aws_caller_identity" "user_identity" {}
+data "aws_region" "user_identity_region" {}
 
 /*
     Internal Module
@@ -67,8 +71,22 @@ module "kubernetes" {
 
 module "route53" {
   source = "../../Modules/Route53"
-  
-  project_name  = local.cluster_name
-  environment   = local.environment
+
   tag           = local.tags  
+  dns           = local.dns
+}
+
+module "acm" {
+  source = "../../Modules/ACM"
+  
+  dns = "*.${local.dns}"
+  tag = local.tags
+}
+
+module "route53_record_set" {
+  source = "../../Modules/Route53/Record-Set"
+  
+  resource_record_value  = module.acm.resource_record_value
+  resource_record_name   = module.acm.resource_record_name
+  zone_id                = module.route53.zone_id 
 }
