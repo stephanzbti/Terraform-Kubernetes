@@ -278,3 +278,492 @@ Todo este projeto está automatizado para ser utilizado como Infraestructure-as-
 O BuildSpec deste projeto foi feito pensando que todos os arquivos estavam no mesmo repositório, porém foi desenhado já pensando no caso de termos de criar repositorios fixos para o Terraform, Kubernetes e a Application, como o contexto pode mudar e aplicações tendem a aumentar de tamanho, temos sempre de imaginar em como escalar determinado projeto, e dessa forma fica fácil escalar todo o necessário.
 
 O AWS EKS existe algumas limitações, por questão de segurança, para ser feito o primeiro acesso ao Cluster é necessário estar com as permissões do usuário que gerou o Cluster, pois assim a AWS consegue controlar o acesso ao Cluster. Após feito esse primeiro acesso com este usuário é possível adicionar novos acessos seguindo o seguinte tutorial: [AWS EKS IAM](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/managing-auth.html).
+
+Optamos por utilizar um IAM de Administrador, pela praticidade que isso pode nos prover, mas é altamente recomendado utilizarmos somente as permissões necessárias para a criação da infraestrutura.. Abaixo irei descrever as IAM necessárias para a ciação de cada processo.
+
+### EKS
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "eks:ListNodegroups",
+                "eks:UntagResource",
+                "eks:ListTagsForResource",
+                "eks:UpdateClusterConfig",
+                "eks:CreateNodegroup",
+                "eks:DeleteCluster",
+                "eks:UpdateNodegroupVersion",
+                "eks:DescribeNodegroup",
+                "eks:ListUpdates",
+                "eks:DeleteNodegroup",
+                "eks:DescribeUpdate",
+                "eks:TagResource",
+                "eks:UpdateNodegroupConfig",
+                "eks:DescribeCluster"
+            ],
+            "Resource": [
+                "arn:aws:eks:*:*:cluster/*",
+                "arn:aws:eks:*:*:nodegroup/*/*/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "eks:ListClusters",
+                "eks:CreateCluster"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### Route53
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "route53:ListTagsForResources",
+                "route53:GetHostedZone",
+                "route53:ChangeResourceRecordSets",
+                "route53:ChangeTagsForResource",
+                "route53:DeleteHostedZone",
+                "route53:UpdateHostedZoneComment",
+                "route53:CreateVPCAssociationAuthorization",
+                "route53:ListTagsForResource"
+            ],
+            "Resource": "arn:aws:route53:::hostedzone/*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "route53:CreateHostedZone",
+                "route53:CreateReusableDelegationSet",
+                "route53:ListHostedZones",
+                "route53:ListHostedZonesByName"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### Certificate Manager
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "acm:DeleteCertificate",
+                "acm:DescribeCertificate",
+                "acm:GetCertificate",
+                "acm:RemoveTagsFromCertificate",
+                "acm:UpdateCertificateOptions",
+                "acm:AddTagsToCertificate",
+                "acm:RenewCertificate"
+            ],
+            "Resource": "arn:aws:acm:*:*:certificate/*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "acm:RequestCertificate",
+                "acm:ListCertificates",
+                "acm:ListTagsForCertificate"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### CodePipeline
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "codepipeline:PutApprovalResult",
+                "codepipeline:PutActionRevision"
+            ],
+            "Resource": "arn:aws:codepipeline:*:*:*/*/*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "codepipeline:EnableStageTransition",
+                "codepipeline:RetryStageExecution",
+                "codepipeline:DisableStageTransition"
+            ],
+            "Resource": "arn:aws:codepipeline:*:*:*/*"
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": [
+                "codepipeline:RegisterWebhookWithThirdParty",
+                "codepipeline:PollForJobs",
+                "codepipeline:TagResource",
+                "codepipeline:DeleteWebhook",
+                "codepipeline:DeregisterWebhookWithThirdParty",
+                "codepipeline:ListWebhooks",
+                "codepipeline:UntagResource",
+                "codepipeline:CreateCustomActionType",
+                "codepipeline:ListTagsForResource",
+                "codepipeline:DeleteCustomActionType",
+                "codepipeline:PutWebhook",
+                "codepipeline:ListActionTypes"
+            ],
+            "Resource": [
+                "arn:aws:codepipeline:*:*:webhook:*",
+                "arn:aws:codepipeline:*:*:actiontype:*/*/*/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor3",
+            "Effect": "Allow",
+            "Action": [
+                "codepipeline:PutThirdPartyJobFailureResult",
+                "codepipeline:PutThirdPartyJobSuccessResult",
+                "codepipeline:PollForThirdPartyJobs",
+                "codepipeline:PutJobFailureResult",
+                "codepipeline:PutJobSuccessResult",
+                "codepipeline:AcknowledgeJob",
+                "codepipeline:AcknowledgeThirdPartyJob",
+                "codepipeline:GetThirdPartyJobDetails",
+                "codepipeline:GetJobDetails"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### CodeBuild
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:BatchGetProjects",
+                "codebuild:DeleteWebhook",
+                "codebuild:ListReportsForReportGroup",
+                "codebuild:InvalidateProjectCache",
+                "codebuild:DescribeTestCases",
+                "codebuild:BatchGetReports",
+                "codebuild:StopBuild",
+                "codebuild:DeleteReportGroup",
+                "codebuild:UpdateWebhook",
+                "codebuild:ListBuildsForProject",
+                "codebuild:CreateWebhook",
+                "codebuild:CreateProject",
+                "codebuild:BatchGetBuilds",
+                "codebuild:UpdateReportGroup",
+                "codebuild:CreateReportGroup",
+                "codebuild:CreateReport",
+                "codebuild:UpdateReport",
+                "codebuild:DeleteReport",
+                "codebuild:BatchDeleteBuilds",
+                "codebuild:DeleteProject",
+                "codebuild:StartBuild",
+                "codebuild:BatchGetReportGroups",
+                "codebuild:BatchPutTestCases"
+            ],
+            "Resource": [
+                "arn:aws:codebuild:*:*:report-group/*",
+                "arn:aws:codebuild:*:*:project/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "codebuild:ImportSourceCredentials",
+                "codebuild:ListReports",
+                "codebuild:ListBuilds",
+                "codebuild:ListCuratedEnvironmentImages",
+                "codebuild:DeleteOAuthToken",
+                "codebuild:ListReportGroups",
+                "codebuild:ListSourceCredentials",
+                "codebuild:ListProjects",
+                "codebuild:DeleteSourceCredentials",
+                "codebuild:ListRepositories",
+                "codebuild:PersistOAuthToken",
+                "codebuild:ListConnectedOAuthAccounts"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+### ECR
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:PutImageTagMutability",
+                "ecr:DescribeImageScanFindings",
+                "ecr:StartImageScan",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:CreateRepository",
+                "ecr:PutImageScanningConfiguration",
+                "ecr:ListTagsForResource",
+                "ecr:ListImages",
+                "ecr:DeleteLifecyclePolicy",
+                "ecr:DeleteRepository",
+                "ecr:UntagResource",
+                "ecr:SetRepositoryPolicy",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:TagResource",
+                "ecr:DescribeRepositories",
+                "ecr:StartLifecyclePolicyPreview",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetRepositoryPolicy",
+                "ecr:GetLifecyclePolicy"
+            ],
+            "Resource": "arn:aws:ecr:*:*:repository/*"
+        }
+    ]
+}
+```
+
+### EC2
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:DeleteTags",
+                "ec2:DeleteVpcPeeringConnection",
+                "ec2:AcceptVpcPeeringConnection",
+                "ec2:CreateTags",
+                "ec2:DeleteRoute",
+                "ec2:RevokeClientVpnIngress",
+                "ec2:ReplaceRoute",
+                "ec2:RejectVpcPeeringConnection",
+                "ec2:DeleteRouteTable",
+                "ec2:RevokeSecurityGroupIngress",
+                "ec2:CreateRoute",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:DeleteSecurityGroup",
+                "ec2:DisableVpcClassicLink",
+                "ec2:CreateVpcPeeringConnection",
+                "ec2:EnableVpcClassicLink"
+            ],
+            "Resource": [
+                "arn:aws:ec2:*:*:vpc-peering-connection/*",
+                "arn:aws:ec2:*:*:route-table/*",
+                "arn:aws:ec2:*:*:client-vpn-endpoint/*",
+                "arn:aws:ec2:*:*:security-group/*",
+                "arn:aws:ec2:*:*:vpc/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DeleteSubnet",
+                "ec2:DescribeInstances",
+                "ec2:ModifyVpcEndpointServiceConfiguration",
+                "ec2:ReplaceRouteTableAssociation",
+                "ec2:DeleteVpcEndpoints",
+                "ec2:AttachInternetGateway",
+                "ec2:DescribeByoipCidrs",
+                "ec2:AssociateVpcCidrBlock",
+                "ec2:AssociateRouteTable",
+                "ec2:DisassociateVpcCidrBlock",
+                "ec2:DescribeInternetGateways",
+                "ec2:CreateInternetGateway",
+                "ec2:ModifyVpcPeeringConnectionOptions",
+                "ec2:DescribeNetworkInterfacePermissions",
+                "ec2:DescribeNetworkAcls",
+                "ec2:DescribeRouteTables",
+                "ec2:RejectVpcEndpointConnections",
+                "ec2:DescribeEgressOnlyInternetGateways",
+                "ec2:CreateVpcEndpointConnectionNotification",
+                "ec2:DescribeVpcClassicLinkDnsSupport",
+                "ec2:DescribeVpcPeeringConnections",
+                "ec2:ModifyNetworkInterfaceAttribute",
+                "ec2:ResetNetworkInterfaceAttribute",
+                "ec2:CreateRouteTable",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DescribeVpcEndpointServiceConfigurations",
+                "ec2:DetachInternetGateway",
+                "ec2:DisassociateRouteTable",
+                "ec2:ModifyVpcEndpointConnectionNotification",
+                "ec2:DescribeVpcClassicLink",
+                "ec2:CreateNetworkInterface",
+                "ec2:CreateVpcEndpointServiceConfiguration",
+                "ec2:DescribeVpcEndpointServicePermissions",
+                "ec2:CreateDefaultVpc",
+                "ec2:AssociateSubnetCidrBlock",
+                "ec2:DeleteNatGateway",
+                "ec2:CreateEgressOnlyInternetGateway",
+                "ec2:DeleteVpc",
+                "ec2:DescribeVpcEndpoints",
+                "ec2:CreateSubnet",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeVpnGateways",
+                "ec2:ModifyVpcEndpoint",
+                "ec2:DeprovisionByoipCidr",
+                "ec2:ModifyVpcEndpointServicePermissions",
+                "ec2:DescribeAddresses",
+                "ec2:CreateNatGateway",
+                "ec2:DescribeInstanceAttribute",
+                "ec2:DescribeRegions",
+                "ec2:CreateVpc",
+                "ec2:DescribeDhcpOptions",
+                "ec2:DescribeVpcEndpointServices",
+                "ec2:DeleteVpcEndpointServiceConfigurations",
+                "ec2:DescribeVpcAttribute",
+                "ec2:CreateDefaultSubnet",
+                "ec2:DeleteNetworkInterfacePermission",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:CreateSecurityGroup",
+                "ec2:DescribeNetworkInterfaceAttribute",
+                "ec2:CreateNetworkAcl",
+                "ec2:ModifyVpcAttribute",
+                "ec2:DescribeVpcEndpointConnections",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DeleteEgressOnlyInternetGateway",
+                "ec2:DetachNetworkInterface",
+                "ec2:AcceptVpcEndpointConnections",
+                "ec2:DescribeTags",
+                "ec2:DescribeNatGateways",
+                "ec2:DisassociateSubnetCidrBlock",
+                "ec2:DescribeVpcEndpointConnectionNotifications",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DeleteVpcEndpointConnectionNotifications",
+                "ec2:DescribeSecurityGroupReferences",
+                "ec2:CreateVpcEndpoint",
+                "ec2:DescribeVpcs",
+                "ec2:DisableVpcClassicLinkDnsSupport",
+                "ec2:AttachNetworkInterface",
+                "ec2:EnableVpcClassicLinkDnsSupport",
+                "ec2:ModifyVpcTenancy",
+                "ec2:CreateNetworkAclEntry"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### CloudWatch
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "logs:ListTagsLogGroup",
+                "logs:DisassociateKmsKey",
+                "logs:DescribeLogGroups",
+                "logs:UntagLogGroup",
+                "logs:DeleteLogGroup",
+                "logs:DescribeLogStreams",
+                "logs:PutMetricFilter",
+                "logs:CreateLogStream",
+                "logs:TagLogGroup",
+                "logs:DeleteRetentionPolicy",
+                "logs:AssociateKmsKey",
+                "logs:PutSubscriptionFilter",
+                "logs:PutRetentionPolicy",
+                "logs:GetLogGroupFields"
+            ],
+            "Resource": "arn:aws:logs:*:*:log-group:*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "logs:GetLogEvents",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:logs:*:*:log-group:*:log-stream:*"
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogDelivery",
+                "logs:DeleteResourcePolicy",
+                "logs:GetLogRecord",
+                "logs:PutResourcePolicy",
+                "logs:PutDestinationPolicy",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:DeleteDestination",
+                "logs:CreateLogGroup",
+                "logs:GetLogDelivery",
+                "logs:PutDestination",
+                "logs:ListLogDeliveries"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+### IAM
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:*",
+                "organizations:DescribeAccount",
+                "organizations:DescribeOrganization",
+                "organizations:DescribeOrganizationalUnit",
+                "organizations:DescribePolicy",
+                "organizations:ListChildren",
+                "organizations:ListParents",
+                "organizations:ListPoliciesForTarget",
+                "organizations:ListRoots",
+                "organizations:ListPolicies",
+                "organizations:ListTargetsForPolicy"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
