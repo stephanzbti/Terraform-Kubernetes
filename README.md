@@ -1,13 +1,19 @@
 # Terraform + CodePipeline + EKS
  
-Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-code (IaC), de um projeto provisionado totalmente na AWS, utilizando seus recursos de forma prática e explicita. Neste projeto abordaremos o Terraform, armazenando seus arquivos no S3, e provisionando totalmente a infra necessária para que a aplicação execute perfeitamente, além disto, utilizaremos os recursos do CodePipeline e CodeBuild, para fazer a automatização dos builds, teste e deployments de nossa aplicação.
+Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-code (IaC), de um projeto provisionado totalmente na AWS, utilizando seus recursos de forma prática e explicita. Neste projeto abordaremos o Terraform, armazenando seus arquivos no S3, e provisionando totalmente a infra necessária para que a aplicação execute perfeitamente, além disto, utilizaremos os recursos do CodePipeline e CodeBuild, para fazer a automatização dos builds, teste, deployments, e provisãpo de recursos na nuvem.
  
 Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que será criada pelo nosso arquivo do Terraform. Todos os passos necessários para a execução deste projeto estão descritos abaixo. Caso deseje ter um conhecimento mais a fundo do Terraform e da AWS e seus recursos, recomendo que leia a documentação de ambas as plataformas.
  
-Para aplicarmos completamente todos os passos necessários para que o projeto execute corretamente, siga os seguintes passos:
+Para aplicarmos completamente todos os passos necessários para que o projeto execute corretamente, de forma automatizada, siga os seguintes passos:
  
 1. [TerraForm](#Terraform)
     - Serviços
+2. [Kubernetes](#Kubernetes)
+    - Ingress Nginx
+
+Caso deseje fazer o processo manualmente de criação de cada parte dos recursos, provisionamento da aplicação e entender de forma detalhada de como funciona cada parte do processo, siga os pasos abaixo:
+
+1. [TerraForm](#Terraform)
     - Infra-Estrutura
 2. [AWS](#AWS)
     - CodePipeline
@@ -19,7 +25,9 @@ Para aplicarmos completamente todos os passos necessários para que o projeto ex
     - MongoDB
     - Aplicação
 4. [Aplicação](#Application)
-5. [Consideracoes Finais](#LastComment)
+5. [TerraForm](#Terraform)
+    - Serviços
+6. [Consideracoes Finais](#LastComment)
  
 #Terraform
 ---
@@ -55,7 +63,7 @@ Utilizamos o Backend "S3", para armazenarmos os arquivos TF States, gerados em t
  
 Utilizamos também o DynamoDB, para fazermos a gestão dos Locks que o TerraForm necessita. Estes Locks, servem para o caso de termos 2 equipes executando um *apply*, do mesmo TF File, no mesmo instante, o que poderia gerar problemas e assim ambos os *apply* falharem ou duplicarem a infra. Estes Locks, bloqueiam a execução de um *apply* simultâneo.
  
-Todos esse primeiro processo do Backend "S3" e o DynamoDB, está codificado em um TF File deste repositório, que está na pasta *TerraForm/Global*. Para executarmos esse TF File, e provisionar a infraestrutura inicial para o TerraForm e todo o conjunto codificado neste projeto, será necessário configurarmos três variáveis de ambiente neste projeto, sendo elas descritas abaixo:
+Todo esse primeiro processo do Backend "S3" e o DynamoDB, está codificado em um TF File deste repositório, que está na pasta *TerraForm/Global*. Para executarmos esse TF File, e provisionar a infraestrutura inicial para o TerraForm e todo o conjunto codificado neste projeto, será necessário configurarmos três variáveis de ambiente neste projeto, sendo elas descritas abaixo:
  
 ```
 export AWS_ACCESS_KEY_ID=""
@@ -79,7 +87,7 @@ Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para a
  
 ### Serviços
  
-Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de Build deste aplicação. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
+Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de build e provisão de recursos deste projeto. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
  
 Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita uma configuração na tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é responsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível o AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token).
  
@@ -90,21 +98,21 @@ terraform init  -> Responsável por baixar e preparar todas as dependências do 
 terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infraestrutura descrita em cada arquivo TF.
 ```
 > Estes comandos devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, será necessário executar este comando na pasta *Terraform/Serviços/__(Development/Production)__*, de acordo com qual ambiente deseja provisionar.
- 
-Após a finalização da criação dos recursos, será armazenado um arquivo TF State no Backend "S3".
+
+Após a finalização da criação dos recursos de serviço, será armazenado um arquivo TF State no Backend "S3" e o build irá iniciar automaticamente pelo CodePipeline, com este Build Iniciado, não será necessário mais nenhuma etapa de criação de recurso, todos os recursos necessários serão providos pelo CodePipeline e sua Build automatizada, sendo necessário apenas modificar o arquivo Kubernetes do Ingress Nginx, para setar o certificado HTTPs correto para nossa aplicação. No tópico do Ingress, temos a maneira certa de se fazer essa correção.
  
 ### Infra-Estrutura
  
-Após a criação de todos os processos de Build automatizado, iremos criar a arquitetura necessária para que nossa aplicação seja provisionada. Nesta etapa optamos por utilizar o EKS, pela questão da segurança, praticidade e compatibilidade com os recursos da AWS, além de nos prover uma rápida escalabilidade e uma alta disponibilidade.
+Iremos criar a arquitetura necessária para que nossa aplicação seja provisionada. Nesta etapa optamos por utilizar o EKS, pela questão da segurança, praticidade e compatibilidade com os recursos da AWS, além de nos prover uma rápida escalabilidade e uma alta disponibilidade.
  
-Para isso optamos por criar uma VPC exclusiva para o EKS e seus workers, sendo divididas em 4 Subnets, sendo 2 delas para operar junto com o EKS Cluster Principal e outra para operarmos com seus Node Group. Optamos por utilizar uma VPC com acesso a internet, para facilitar o gerenciamento do Cluster, entretanto é altamente recomendado que seja configurado um Cluster, que tenha 2 subnets privadas e 2 subnets públicas, para que sejam utilizados de acordo com a necessidade do serviço, podendo ser um serviço que não necessite acesso externo ou um serviço que necessite de um acesso externo.
+Para isso optamos por criar uma VPC exclusiva para o EKS e seus workers, sendo divididas em 4 Subnets, sendo 2 delas para operar junto com o EKS Cluster Principal e 2 outras para operarmos com seus Node Group. Optamos por utilizar uma VPC com acesso a internet, para facilitar o gerenciamento do Cluster, entretanto é altamente recomendado que seja configurado um Cluster, que tenha 2 subnets privadas e 2 subnets públicas, para que sejam utilizados de acordo com a necessidade do serviço, podendo ser um serviço que não necessite acesso externo ou um serviço que necessite de um acesso externo.
  
 Criado o EKS, é necessário que seja criado o Node Group(Workes), para que tenhamos os recursos necessário para prover nossa aplicação. Cada Node Group é necessário que sejam selecionados as Instâncias EC2 desejada, as subnets que serão utilizadas pelas instâncias, e o tamanho desejado de workers, sendo configurado por *desejado*, *máximo*, *mínimo*. Feitas todas essas configurações seu Node Group estará pronto para ser utilizado, e seu EKS também estará pronto para prover aplicações.
  
 Neste projeto temos os arquivos TF Files necessários para criarmos automaticamente todo o EKS, sendo desde a parte do VPC, Node Group e Route53. Dentro da pasta *Infraestructure/(Development/Production)*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo. Caso deseje modificar o VPC gerado, é necessário modificar apenas o *main.tf* que está dentro da pasta *Infraestructure/(Development/Production)/vpc*.
  
 Optamos por criar automaticamente o Route53, sendo ele gerado a partir dos valores configurados para a criação do EKS. O DNS criado teria o nome: *{cluster_name}-{environment}.{user_identity}.{aws_region}.com*, gerando também os certificados WildCard pelo Certificate Manager, ficando **.{cluster_name}-{environment}.{user_identity}.{aws_region}.com*. Este DNS criado, será utilizado para o acesso a aplicação.
- 
+
 Para iniciar o processo de criação dos serviços é necessário executar os seguintes comandos:
  
 ```
@@ -198,7 +206,7 @@ Com este poderoso LoadBalancer, poderemos configurar duas aplicações responden
  
 Caso optassem por utilizar o ALB, poderíamos gerar ele automaticamente pelo Terraform, cadastrar o Route53 pelo TerraForm e ainda validar os certificados, porém como optamos em utilizar o Nginx focando em custo, não será possível fazer isso.
 
-Para configurar o certificado criado pelo Certificate Manager no LoadBalancer do Ingress é necessário editar o arquivo *02-services.yaml*, que está dentro da pasta *Kubernetes/Ingress-Nginx*, descomentando a __linha 11__ e substituindo o arn existente, pelo gerado do TerraForm, após isso todas as requisições provenientes a porta 443 do LoadBalancer irão conter certificados HTTPs.
+Para configurar o certificado criado pelo Certificate Manager no LoadBalancer do Ingress é necessário editar o arquivo *02-services.yaml*, que está dentro da pasta *Kubernetes/Ingress-Nginx*, descomentando a __linha 11__ e substituindo o arn existente, pelo gerado do Certificar Manager, gerado pelo TerraForm, após isso todas as requisições provenientes a porta 443 do LoadBalancer irão conter certificados HTTPs.
 
 ### Storage Class
  
@@ -267,4 +275,4 @@ Todo este projeto está automatizado para ser utilizado como Infraestructure-as-
  
 O BuildSpec deste projeto foi feito pensando que todos os arquivos estavam no mesmo repositório, porém foi desenhado já pensando no caso de termos de criar repositorios fixos para o Terraform, Kubernetes e a Application, como o contexto pode mudar e aplicações tendem a aumentar de tamanho, temos sempre de imaginar em como escalar determinado projeto, e dessa forma fica fácil escalar todo o necessário.
 
-O AWS EKS existe algumas limitações, para ser feito o primeiro acesso ao Cluster é necessário estar com as permissões do usuário que gerou o Cluster, pois assim a AWS consegue controlar o acesso ao Cluster. Após feito esse primeiro acesso com este usuário é possível adicionar novos acessos seguindo o seguinte tutorial: [AWS EKS IAM](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/managing-auth.html).
+O AWS EKS existe algumas limitações, por questão de segurança, para ser feito o primeiro acesso ao Cluster é necessário estar com as permissões do usuário que gerou o Cluster, pois assim a AWS consegue controlar o acesso ao Cluster. Após feito esse primeiro acesso com este usuário é possível adicionar novos acessos seguindo o seguinte tutorial: [AWS EKS IAM](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/managing-auth.html).
