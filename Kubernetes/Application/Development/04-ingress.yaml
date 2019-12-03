@@ -19,7 +19,7 @@ spec:
         backend:
           serviceName: backend-user-nodeport
           servicePort: 80
-      - path: .*
+      - path: /.*
         backend:
           serviceName: frontend-user-nodeport
           servicePort: 80
