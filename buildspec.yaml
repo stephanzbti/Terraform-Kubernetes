@@ -29,7 +29,7 @@ phases:
       - echo Building the Docker image...          
       - docker build -t $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG --no-cache ./Application/FrontEnd/
       - docker build -t $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG --no-cache ./Application/BackEnd/
-      - docker build -t $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG --no-cache ./Application/TerraForm/
+      # - docker build -t $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG --no-cache ./Application/TerraForm/
       - echo Finishing building Docker image
   post_build:
     commands:
@@ -37,13 +37,13 @@ phases:
       - echo Pushing the Docker image...
       - docker push $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG
       - docker push $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG
-      - docker push $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG
-      - docker tag $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-latest 
-      - docker tag $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-latest  
-      - docker tag $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-latest  
-      - docker push $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-latest   
-      - docker push $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-latest  
-      - docker push $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-latest  
+      # - docker push $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG
+      - docker tag $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_FRONTEND:latest 
+      - docker tag $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_BACKEND:latest  
+      # - docker tag $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_TERRAFORM:latest  
+      - docker push $IMAGE_REPO_NAME_FRONTEND:latest   
+      - docker push $IMAGE_REPO_NAME_BACKEND:latest  
+      - docker push $IMAGE_REPO_NAME_TERRAFORM:latest  
       - echo Finishing pushing Docker image... 
       - echo Starting Deploying EKS
       - kubectl --record deployment.apps/backend-user-deployment set image deployment.v1.apps/backend-user-deployment backend-user=$IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG -n application
