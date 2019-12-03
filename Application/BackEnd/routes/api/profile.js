@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const passport = require("passport");
+const settings = require("../../config/keys")
 
 // Load Profile and User Module
 const Profile = require("../../models/Profile");
@@ -17,13 +18,13 @@ const validateEducationInput = require("../../validation/education");
 // @route   GET api/profile/test
 // @desc    Test Posts Route
 // @access  Public
-router.get(settings.URL_BASE+"/test", (req, res) => res.json({ msg: "Profile Works" }));
+router.get("/test", (req, res) => res.json({ msg: "Profile Works" }));
 
 // @route   GET api/profile
 // @desc    Get Current user Profile
 // @access  Private
 router.get(
-  settings.URL_BASE+"/",
+  "/",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     const errors = {};
@@ -45,7 +46,7 @@ router.get(
 // @desc    Create or Edit User Profile
 // @access  Private
 router.post(
-  settings.URL_BASE+"/",
+  "/",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     const { errors, isValid } = validateProfileInput(req.body);
@@ -104,7 +105,7 @@ router.post(
 // @route   GET api/profile/handle/:handle
 // @desc    Get Profile by Handle
 // @access  Public
-router.get(settings.URL_BASE+"/handle/:handle", (req, res) => {
+router.get("/handle/:handle", (req, res) => {
   const errors = {};
   Profile.findOne({ handle: req.params.handle })
     .populate("user", ["name", "avatar"])
@@ -121,7 +122,7 @@ router.get(settings.URL_BASE+"/handle/:handle", (req, res) => {
 // @route   GET api/profile/user/:user_id
 // @desc    Get Profile by UserID
 // @access  Public
-router.get(settings.URL_BASE+"/user/:user_id", (req, res) => {
+router.get("/user/:user_id", (req, res) => {
   const errors = {};
   Profile.findOne({ user: req.params.user_id })
     .populate("user", ["name", "avatar"])
@@ -140,7 +141,7 @@ router.get(settings.URL_BASE+"/user/:user_id", (req, res) => {
 // @route   GET api/profile/all
 // @desc    Get all Profiles
 // @access  Public
-router.get(settings.URL_BASE+"/all", (req, res) => {
+router.get("/all", (req, res) => {
   const errors = {};
   Profile.find()
     .populate("user", ["name", "avatar"])
@@ -158,7 +159,7 @@ router.get(settings.URL_BASE+"/all", (req, res) => {
 // @desc    Add experience to profile
 // @access  Private
 router.post(
-  settings.URL_BASE+"/experience",
+  "/experience",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     const { errors, isValid } = validateExperienceInput(req.body);
@@ -187,7 +188,7 @@ router.post(
 // @desc    Add Education to profile
 // @access  Private
 router.post(
-  settings.URL_BASE+"/education",
+  "/education",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     const { errors, isValid } = validateEducationInput(req.body);
@@ -216,7 +217,7 @@ router.post(
 // @desc    Remove an experience from user profile
 // @access  Private
 router.delete(
-  settings.URL_BASE+"/experience/:exp_id",
+  "/experience/:exp_id",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     Profile.findOne({ user: req.user.id })
@@ -236,7 +237,7 @@ router.delete(
 // @desc    Remove an Education from user profile
 // @access  Private
 router.delete(
-  settings.URL_BASE+"/education/:exp_id",
+  "/education/:exp_id",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     Profile.findOne({ user: req.user.id })
@@ -256,7 +257,7 @@ router.delete(
 // @desc    Remove my user profile
 // @access  Private
 router.delete(
-  settings.URL_BASE+"/",
+  "/",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     Profile.findOneAndRemove({ user: req.user.id }).then(() => {
