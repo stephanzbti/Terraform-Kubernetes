@@ -198,7 +198,7 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
 ```
 > É necessário estar dentro da pasta *Kubernetes/Services/Ingress-Nginx* ou trocar o __*.*__ por __*Kubernetes/Services/Ingress-Nginx*__.
  
-Após aplicarmos corretamente os arquivos de configuração do Ingress Nginx e o LoadBalancer estiver criado corretamente, teremos um acesso às aplicações que estiverem hospedadas no Kubernetes, sendo necessário apenas configurar no DNS para apontar para o DNS do LoadBalancer criado.
+Após aplicarmos corretamente os arquivos de configuração do Ingress Nginx e o LoadBalancer estiver criado corretamente, teremos um acesso às aplicações que estiverem hospedadas no Kubernetes, sendo necessário apenas configurar no DNS para apontar para o DNS do LoadBalancer criado. Caso não saiba apontar no Route 53, veja este [tutorial](https://docs.aws.amazon.com/pt_br/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html).
  
 Essa parte de apontamento do DNS do LoadBalancer no Route53, deverá ser feita manualmente, pois essa parte ainda não está automatizada neste processo. Uma forma de automatizar esse processo seria criando um serviço que rodaria junto ao Ingress e ele automaticamente registraria no Route53 a todo momento que for criado um novo Ingress no Kubernetes, dessa forma seria necessário apenas a criação do Ingress, sem a necessidade de criar no Route53, em *Python* uma aplicação deste porte seria feita rapidamente, recomendo que leia sobre a documentacao do [Boto3](https://github.com/boto/boto3) e [Kubernetes-Client Python](https://github.com/kubernetes-client/python), em outro momento irei criar um repositório com a aplicação que gerencia essa parte.
  
@@ -207,6 +207,8 @@ Com este poderoso LoadBalancer, poderemos configurar duas aplicações responden
 Caso optassem por utilizar o ALB, poderíamos gerar ele automaticamente pelo Terraform, cadastrar o Route53 pelo TerraForm e ainda validar os certificados, porém como optamos em utilizar o Nginx focando em custo, não será possível fazer isso.
 
 Para configurar o certificado criado pelo Certificate Manager no LoadBalancer do Ingress é necessário editar o arquivo *02-services.yaml*, que está dentro da pasta *Kubernetes/Ingress-Nginx*, descomentando a __linha 11__ e substituindo o arn existente, pelo gerado do Certificar Manager, gerado pelo TerraForm, após isso todas as requisições provenientes a porta 443 do LoadBalancer irão conter certificados HTTPs.
+
+> Caso deseje utilizar um ALB no lugar de um Ingress Nginx, estará disponível está configuração na branch __*release/terraform*__. Lá você terá um exemplo completo utilizando o TerraForm, LoadBalancer, sem a necessidade do Nginx Ingress.
 
 ### Storage Class
  
