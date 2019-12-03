@@ -79,3 +79,4 @@ spec:
             cpu: "256m"
       imagePullSecrets:
         - name: aws-registry
+---
