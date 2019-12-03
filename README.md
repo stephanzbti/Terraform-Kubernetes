@@ -34,7 +34,7 @@ Caso deseje fazer o processo manualmente de criação de cada parte dos recursos
 ## TerraForm
 ---
  
-Neste projeto optamos pela utilização do TerraForm (IaC), pela praticidade e facilidade que temos com ele. Por ter sido projeto para se utilizar com equipes grandes de desenvolvimento, trabalhando todos os processos necessários para este tipo de ação, ele conta com sistema de Lock, quando necessário, com armazenamento de suas configurações em nuvem, tendo toda a gestão para evitar falhas gerenciadas por ele.
+Neste projeto optamos pela utilização do TerraForm (IaC), pela praticidade e facilidade que temos com ele. Por ter sido projetado para se utilizar com equipes grandes de desenvolvimento, trabalhando todos os processos necessários para este tipo de ação, ele conta com sistema de Lock, quando necessário, com armazenamento de suas configurações em nuvem, tendo toda a gestão para evitar falhas gerenciadas por ele.
  
 Este projeto do TerraForm foi organizado na seguinte maneira:
  
@@ -46,14 +46,9 @@ Terraform/
     |    |- Development/ -> Infraestrutura do ambiente de Desenvolvimento.
     |    |    |- vpc/ -> Responsável por criar a VPC necessária para os recursos deste ambiente.
     |    |- Production/ -> Infraestrutura do ambiente de Production.
+    |    |    |- vpc/ -> Responsável por criar a VPC necessária para os recursos deste ambiente.
     |- Modules/ -> Responsável por armazenar todos os arquivos de Módulos, que são reaproveitados quando necessários.
-    |    |- CodeBuild/ -> Responsável por criar o CodeBuild das aplicações deste projeto.
-    |    |- CodePipeline/ -> Responsável por criar o CodePipeline das aplicações deste projeto.
-    |    |- ECR/ -> Responsável por criar o ECR das aplicações deste projeto.
-    |    |- Kubernetes-Cluster/ -> Responsável por criar o Kubernetes que será usado neste projeto.
-    |    |- Route53/ -> Responsável por criar zonas de DNS para serem utilizadas neste projeto.
-    |    |- ACM/ -> Responsável por criar os certificados utilizados por este projeto.
-    | Services/ -> Responsável pela geração dos serviços em cada ambiente necessário deste projeto.
+    |- Services/ -> Responsável pela geração dos serviços em cada ambiente necessário deste projeto.
     |    |-  Development/ -> Serviços do ambiente de Desenvolvimento.
     |    |-  Production/ -> Serviços do ambiente de Produção.
 ```
@@ -89,7 +84,7 @@ Ao finalizar a execução de ambos os comandos, será criado um Bucket S3 para a
  
 Nesta etapa já estamos prontos para criarmos os serviços necessários para a automação de build e provisão de recursos deste projeto. Dentro da pasta *Services/Development* ou *Services/Production*, existe um arquivo *main.tf* que é responsável por agrupar todos os recursos necessários, junto com os recursos existem alguns valores que podem ser modificados, para criar ambientes diferentes sempre que necessário, esses valores estão descritos dentro da tag __*locals { }*__, pela qual armazena todas as configurações locais deste Tf File, desta forma caso queira mudar algo para sua infraestrutura gerada, recomendo que modifique neste arquivo.
  
-Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita duas configurações nos arquivos TF File. A primeira será necessário modificar a tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é responsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível o AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token). A segunda modificação, consiste em modificar o arquivo *main.tf*, existente na pasta __*Terraforms/Services/(Development/Production)*__, colocando o valor da chave KMS criada anteriomente, na __*linha 48*__.
+Para que ocorra tudo perfeitamente com a criação do CodeBuild e seu processo de automação, é necessário que seja feita duas configurações nos arquivos TF File. A primeira será necessário modificar a tag __*locals { }*__, que consiste em modificar a chave: __*OAuthToken*__. Essa chave é responsável por permitir o acesso ao repositório e ao WebHook, entre o GitHub e o AWS CodePipeline, sem a criação deste Token, não será possível o AWS CodePipeline acessar os arquivos no repositório. Para criar o __*OAuthToken*__ no GitHub, segue o tutorial: [GitHub](https://docs.cachethq.io/docs/github-oauth-token). A segunda modificação, consiste em modificar o arquivo *main.tf*, existente na pasta __*Terraforms/Services/(Development/Production)*__, na __*linha 48*__, colocando o valor da chave KMS criada anteriomente.
  
 Para iniciar o processo de criação dos serviços é necessário executar os seguintes comandos:
  
@@ -99,7 +94,7 @@ terraform apply -auto-approve -> Responsável por criar e gerenciar toda a infra
 ```
 > Estes comandos devem ser executados dentro da pasta principal de cada Serviço/InfraEstrutura. No caso acima, será necessário executar este comando na pasta *Terraform/Serviços/__(Development/Production)__*, de acordo com qual ambiente deseja provisionar.
 
-Após a finalização da criação dos recursos de serviço, será armazenado um arquivo TF State no Backend "S3" e o build irá iniciar automaticamente pelo CodePipeline, com este Build Iniciado, não será necessário mais nenhuma etapa de criação de recurso, todos os recursos necessários serão providos pelo CodePipeline e sua Build automatizada, sendo necessário apenas modificar o arquivo Kubernetes do Ingress Nginx, para setar o certificado HTTPs correto para nossa aplicação. No tópico do Ingress, temos a maneira certa de se fazer essa correção.
+Após a finalização da criação dos recursos de serviço, será armazenado um arquivo TF State no Backend "S3" e o build irá iniciar automaticamente pelo CodePipeline, com este Build Iniciado, não será necessário mais nenhuma etapa de criação de recurso, todos os recursos necessários serão providos pelo CodePipeline e sua build automatizada.
  
 ### Infra-Estrutura
  
@@ -152,7 +147,8 @@ Optamos pela utilização do EKS para este projeto, graças a sua escalabilidade
  
 O Kubernetes é uma poderosa ferramenta de orquestração de containers, com ela podemos organizar os recursos da melhor maneira e ainda criar *réplicas* de nossas aplicações, para caso ocorra algum desastre a aplicação não fique fora do ar. Além disso, é uma das ferramentas com maior contribuição do GitHub, sendo uma comunidade forte e ativa de desenvolvimento. É possível também desenvolver plugins e serviços, que rodam junto ao Kubernetes e assim automatizar ainda mais todo o ambiente, e um desses exemplos seria o Ingress (Nginx ou ALB), cert-manager(Geração de Certificado Válidos), replicator(Réplica secrets), etc. Ao se utilizar todos os recursos que o Kubernetes nos provê, é possível ter uma infraestrutura robusta e com todos os recursos necessários para se executar uma aplicação perfeitamente.
  
-Neste projeto, optamos por deixar o EKS fazer toda a gestão de recursos na nuvem necessárias para que a aplicação execute com segurança e escalabilidade. Dessa forma, optamos por utilizar um Ingress Nginx, no lugar de um ALB, pela questão de praticidade de se aplicar esse recurso e principalmente pela questão de custo que teríamos ao utilizar. Um ALB tem um custo fixo mensal de $25 e ainda existe um custo variável que ocorre de acordo com a quantidade de dados trafegados e a quantidade de requisições por mês, dessa forma poderia deixar um projeto pequeno inviável. O Ingress Nginx utiliza os recursos das próprias máquinas do Kubernetes, e por necessitar de um processamento baixo e de pouca memória, faz com que o custo com essa aplicação seja pequena, e ela funcione perfeitamente nestes casos de uso. Uma vantagem do ALB, seria a utilização de TCP (Secure), o que o Ingress Nginx não atenderia as especificações, portanto sempre recomendo analisar muito bem quais as necessidades dos serviços que serão providos pelo ingress.
+Neste projeto, optamos por criar um LoadBalancer Layer 7(ALB) e ao mesmo tempo um ingress Nginx em paralelo. Ambos provêm um application LoadBalancer muito poderoso, pelo qual cada um com seu caso de uso se torna ótimo utilizar. Optamos por deixar os dois, para demonstrar que é possível criar tanto um quanto o outro, e facilitar o processo de automatização do ambiente, juntando o poder do ALB e do TerraForm. Entretanto um ALB tem um custo fixo mensal de $25 e ainda existe um custo variável que ocorre de acordo com a quantidade de dados trafegados e a quantidade de requisições por mês, dessa forma poderia deixar um projeto pequeno inviável. O Ingress Nginx utiliza os recursos das próprias máquinas do Kubernetes, e por necessitar de um processamento baixo e de pouca memória, faz com que o custo com essa aplicação seja pequena, e ela funcione perfeitamente nestes casos de uso. Uma vantagem do ALB, seria a utilização de TCP (Secure), o que o Ingress Nginx não atenderia as especificações, portanto sempre recomendo analisar muito bem quais as necessidades dos serviços que serão providos pelo ingress.
+
  
 Os arquivos Kubernetes deste projeto estão armazenados na pasta *Kubernetes/*, eles estão divididos em dois conjuntos *Kubernetes/Application* e *Kubernetes/Services*. Segue uma explicação detalhada de cada pasta:
  
@@ -190,8 +186,8 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
 > É necessário estar dentro da pasta que deseja aplicar os arquivos ou trocar o __*.*__ pela pasta de destino dos arquivos Yaml, que deseja aplicar.
  
 ### Ingress Nginx
- 
-Para utilizarmos o Ingress Nginx criamos um LoadBalancer de Layer 7(ALB), o objetivo deste LoadBalancer será para que as requisições possam chegar aos servidores web corretamente. Para criarmos os recursos necessários para o Kubernetes reconhecer o Ingress Nginx e ele funcionar como um Application Gateway, e necessário aplicar seus arquivos yaml, estes arquivos estão dentro da pasta *Kubernetes/Services/Ingress-Nginx*. Comando necessário para aplicar:
+
+Para utilizarmos o Ingress Nginx é necessário criar um LoadBalancer de Layer 7(ALB), o objetivo deste LoadBalancer será para que as requisições possam chegar aos servidores web corretamente. Para criarmos os recursos necessários para o Kubernetes reconhecer o Ingress Nginx e ele funcionar como um Application Gateway, e necessário aplicar seus arquivos yaml, estes arquivos estão dentro da pasta *Kubernetes/Services/Ingress-Nginx*. Comando necessário para aplicar:
  
 ```
 kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atual.

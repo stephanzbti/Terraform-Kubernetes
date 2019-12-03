@@ -17,14 +17,14 @@ variable "environments" {
   type        = string
 }
 
-variable "subnet1" {
-  description = "EKS - Kubernetes Cluster Subnet1"
-  type        = string
+variable "subnet" {
+  description = "EKS - Kubernetes Cluster Subnet"
+  type        = list
 }
 
-variable "subnet2" {
-  description = "EKS - Kubernetes Cluster Subnet2"
-  type        = string
+variable "subnet_nodegroup" {
+  description = "EKS - Kubernetes Cluster Subnet Node Group"
+  type        = list
 }
 
 variable "vpc" {

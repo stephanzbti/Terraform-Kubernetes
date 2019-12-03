@@ -38,7 +38,7 @@ locals {
     Owner       = "stephanzbti"
     Repo        = "Terraform-Kubernetes"
     Branch      = "development"
-    OAuthToken  = ""
+    OAuthToken  = "9f607af606b08059b415bf9fe0d7670bd6a29dc2"
   }
   cluster_name  = "K8s-Hotmart-Development"
   environment_path = "Development"

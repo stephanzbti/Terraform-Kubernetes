@@ -10,6 +10,7 @@ spec:
   ports:
   - port: 27017
     targetPort: 27017
+    clusterIP: 10.100.168.15
   selector:
     app: mongodb-statefull
 ---

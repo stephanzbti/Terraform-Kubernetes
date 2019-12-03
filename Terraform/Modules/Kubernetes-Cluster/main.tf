@@ -10,14 +10,6 @@ data "aws_iam_policy" "AmazonEKSServicePolicy" {
   arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
 }
 
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-
-data "aws_vpc" "eks_vpc" {
-  id = var.vpc
-}
-
 /*
     Resources
 */
@@ -82,7 +74,7 @@ resource "aws_eks_cluster" "kubernetes_cluster" {
   enabled_cluster_log_types = ["api", "audit", "scheduler", "authenticator", "controllerManager"]
 
   vpc_config {
-    subnet_ids = [var.subnet1, var.subnet2]
+    subnet_ids = var.subnet
     endpoint_private_access = true
   }
 
@@ -99,30 +91,6 @@ resource "aws_eks_cluster" "kubernetes_cluster" {
 /*
   NodeGroup
 */
-
-/*
-  VPC - Subnet
-*/
-
-resource "aws_subnet" "nodegroup_subnet1" {
-  availability_zone = data.aws_availability_zones.available.names[3]
-  cidr_block        = cidrsubnet(data.aws_vpc.eks_vpc.cidr_block, 8, 3)
-  vpc_id            = data.aws_vpc.eks_vpc.id
-
-  tags = {
-    "kubernetes.io/cluster/${aws_eks_cluster.kubernetes_cluster.name}" = "shared"
-  }
-}
-
-resource "aws_subnet" "nodegroup_subnet2" {
-  availability_zone = data.aws_availability_zones.available.names[4]
-  cidr_block        = cidrsubnet(data.aws_vpc.eks_vpc.cidr_block, 8, 4)
-  vpc_id            = data.aws_vpc.eks_vpc.id
-
-  tags = {
-    "kubernetes.io/cluster/${aws_eks_cluster.kubernetes_cluster.name}" = "shared"
-  }
-}
 
 /*
   IAM
@@ -162,7 +130,7 @@ resource "aws_eks_node_group" "esk_node_group" {
   cluster_name    = aws_eks_cluster.kubernetes_cluster.name
   node_group_name = "EKS-Node-Group"
   node_role_arn   = aws_iam_role.eks_cluster_nodegroup.arn
-  subnet_ids      = [ aws_subnet.nodegroup_subnet1.id, aws_subnet.nodegroup_subnet2.id ]
+  subnet_ids      = var.subnet_nodegroup
   instance_types  = var.instance_type
 
   scaling_config {

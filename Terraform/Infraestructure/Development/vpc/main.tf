@@ -1,4 +1,12 @@
 /*
+  Data
+*/
+
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+/*
     VPC
 */
 
@@ -32,6 +40,31 @@ resource "aws_subnet" "second_zone" {
   depends_on = [
       aws_vpc.kubernetes_vpc
   ]
+}
+
+
+/*
+  Subnet NodeGroup
+*/
+
+resource "aws_subnet" "nodegroup_subnet1" {
+  availability_zone = data.aws_availability_zones.available.names[3]
+  cidr_block        = cidrsubnet(aws_vpc.kubernetes_vpc.cidr_block, 8, 3)
+  vpc_id            = aws_vpc.kubernetes_vpc.id
+
+  tags = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+  }
+}
+
+resource "aws_subnet" "nodegroup_subnet2" {
+  availability_zone = data.aws_availability_zones.available.names[4]
+  cidr_block        = cidrsubnet(aws_vpc.kubernetes_vpc.cidr_block, 8, 4)
+  vpc_id            = aws_vpc.kubernetes_vpc.id
+
+  tags = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+  }
 }
 
 /*
