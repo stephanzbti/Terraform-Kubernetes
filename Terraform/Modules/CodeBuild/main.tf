@@ -127,7 +127,7 @@ POLICY
 resource "aws_codebuild_project" "codebuild_project" {
   name          = "${var.project_name}-${var.environment}-codebuild"
   description   = "CodeBuild Project - ${var.project_name}-${var.environment}"
-  build_timeout = "5"
+  build_timeout = "60"
   service_role  = aws_iam_role.codebuild_iam_role.arn
 
   artifacts {
@@ -184,6 +184,11 @@ resource "aws_codebuild_project" "codebuild_project" {
     environment_variable {
       name  = "EKS_CLUSTER_NAME"
       value = var.cluster_name
+    } 
+
+    environment_variable {
+      name  = "TERRAFORM_ENVIRONMENT"
+      value = var.terraform_environment
     } 
   }
 

@@ -28,6 +28,11 @@ variable "compute_type" {
   type        = string
 }
 
+variable "terraform_environment" {
+  description = "CodeBuild - Terraform Environment"
+  type        = string
+}
+
 variable "tag" {
   description = "CodeBuild - Tag"
   type        = any
