@@ -10,7 +10,7 @@ spec:
   ports:
   - port: 80
     targetPort: 80
-    nodeport: 32078
+    nodePort: 32078
   selector:
     app: frontend-user
 ---
