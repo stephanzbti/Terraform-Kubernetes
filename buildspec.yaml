@@ -17,19 +17,28 @@ phases:
       - mv terraform /usr/local/bin/
   pre_build:
     commands:
+      - echo Starting apply TerraForm files
+      - terraform init ./Terraform/Infraestructure/$TERRAFORM_ENVIRONMENT/
+      - terraform apply ./Terraform/Infraestructure/$TERRAFORM_ENVIRONMENT/ -auto-approve
+      - echo Configure EKS kubectl
+      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+      - echo Provisioning resource on EKS
+      - kubectl apply -f ./Kubernetes/Services/Ingress-Nginx/
+      - kubectl apply -f ./Kubernetes/Services/MongoDB/
+      - kubectl apply -f ./Kubernetes/Services/Storage-Class/
+      - echo Provisioning Application on EKS
+      - kubectl apply -f ./Kubernetes/Application/BackEnd/$TERRAFORM_ENVIRONMENT/
+      - kubectl apply -f ./Kubernetes/Application/FrontEnd/$TERRAFORM_ENVIRONMENT/
       - echo Logging in to Amazon ECR...
       - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=$COMMIT_HASH
-      - echo Configure EKS kubectl
-      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...          
       - docker build -t $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG --no-cache ./Application/FrontEnd/
       - docker build -t $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG --no-cache ./Application/BackEnd/
-      # - docker build -t $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG --no-cache ./Application/TerraForm/
       - echo Finishing building Docker image
   post_build:
     commands:
@@ -37,13 +46,10 @@ phases:
       - echo Pushing the Docker image...
       - docker push $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG
       - docker push $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG
-      # - docker push $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG
-      - docker tag $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_FRONTEND:latest 
-      - docker tag $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_BACKEND:latest  
-      # - docker tag $IMAGE_REPO_NAME_TERRAFORM:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_TERRAFORM:latest  
-      - docker push $IMAGE_REPO_NAME_FRONTEND:latest   
-      - docker push $IMAGE_REPO_NAME_BACKEND:latest  
-      # - docker push $IMAGE_REPO_NAME_TERRAFORM:latest  
+      - docker tag $IMAGE_REPO_NAME_FRONTEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_FRONTEND:latest
+      - docker tag $IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG $IMAGE_REPO_NAME_BACKEND:latest
+      - docker push $IMAGE_REPO_NAME_FRONTEND:latest
+      - docker push $IMAGE_REPO_NAME_BACKEND:latest
       - echo Finishing pushing Docker image... 
       - echo Starting Deploying EKS
       - kubectl --record deployment.apps/backend-user-deployment set image deployment.v1.apps/backend-user-deployment backend-user=$IMAGE_REPO_NAME_BACKEND:$PROJECT_NAME-$IMAGE_TAG -n application
