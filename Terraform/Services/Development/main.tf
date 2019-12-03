@@ -40,7 +40,7 @@ locals {
     Branch      = "development"
     OAuthToken  = ""
   }
-  cluster_name  = "K8s-Hotmart-Development"
+  cluster_name  = "k8s-hotmart"
   environment_path = "Development"
 }
 
