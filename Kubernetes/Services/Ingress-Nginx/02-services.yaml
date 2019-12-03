@@ -8,11 +8,11 @@ metadata:
     app.kubernetes.io/part-of: ingress-nginx
   annotations:
     # replace with the correct value of the generated certificate in the AWS console
-    # service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:sa-east-1:176022691045:certificate/90447416-4f6e-4823-84c9-ba9627abdffb"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:588231123606:certificate/4a0a66dd-89e4-47f4-b432-7361e4f5b1ed"
     # the backend instances are HTTP
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
     # Map port 443
-    # service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
     # Ensure the ELB idle timeout is less than nginx keep-alive timeout. By default,
     # NGINX keep-alive is set to 75s. If using WebSockets, the value will need to be
     # increased to '3600' to avoid any potential issues.
