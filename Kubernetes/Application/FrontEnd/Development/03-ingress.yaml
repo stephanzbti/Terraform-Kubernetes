@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-  - host: application.onredes.com
+  - host: application.development.588231123606.us-east-1.k8s-hotmart.com
     http:
       paths:
       - backend:
