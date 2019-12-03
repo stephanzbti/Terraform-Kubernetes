@@ -5,7 +5,7 @@ Este projeto tem como objetivo demonstrar a automação e a Infraestructure-as-c
 Essa aplicação será provisionada a partir de um EKS - Kubernetes Cluster, que será criada pelo nosso arquivo do Terraform. Todos os passos necessários para a execução deste projeto estão descritos abaixo. Caso deseje ter um conhecimento mais a fundo do Terraform e da AWS e seus recursos, recomendo que leia a documentação de ambas as plataformas.
 
 As regras necessárias para criar cada recurso, estão descritas no final desta documentação, atualmente estamos utilizando a política *AdminAccess* para facilitar a criação, porém é altamente recomendado que seja utilizado as políticas descritas abaixo.
- 
+
 Para aplicarmos completamente todos os passos necessários para que o projeto execute corretamente, de forma automatizada, siga os seguintes passos:
  
 1. [TerraForm](#Terraform)
@@ -61,7 +61,7 @@ Terraform/
     |    |-  Production/ -> Serviços do ambiente de Produção.
 ```
 > Foram cortados os arquivos *variables.tf*, *outputs.tf*, *main.tf*, pois todos consistem na mesma abordagem: Entrada de valores, saída de valores e criação de recursos.
- 
+
 Utilizamos o Backend "S3", para armazenarmos os arquivos TF States, gerados em todos os momentos que é feito algum _terraform apply_, para que em qualquer momento tenhamos acesso a estes arquivos, e dessa forma o TerraForm possa controlar todos os recursos que já foram criados por ele.
  
 Utilizamos também o DynamoDB, para fazermos a gestão dos Locks que o TerraForm necessita. Estes Locks, servem para o caso de termos 2 equipes executando um *apply*, do mesmo TF File, no mesmo instante, o que poderia gerar problemas e assim ambos os *apply* falharem ou duplicarem a infra. Estes Locks, bloqueiam a execução de um *apply* simultâneo.
@@ -78,6 +78,14 @@ Estas variáveis de ambiente são responsável por conceder o acesso a AWS e per
  
 Por padrão este projeto está configurado para criar um bucket com o nome __*terraform-state-files-hotmart*__, caso deseje mudar o nome do Bucket ou caso de erro na criação por duplicidade no nome do Bucket, recomendo que edite os arquivos __*main.tf*__, das pastas *Infraestructure/(Development/Production)* e *Services/(Development/Production)*, na tag __*Terraform{ backend "s3" {}}*__ para o novo nome de Bucket desejado.
  
+Caso deseje existe um Dockfile na pasta */Terraform*, pelo qual está configurado para instalar o Terraform e inicializar a automação do projeto, caso deseje você pode executa-la por terminal. Para utilizar essa imagem, basta digitar os seguintes comandos:
+
+```
+docker build -t terraform:1 --build-arg AWS_ACCESS_KEY_ID="" --build-arg AWS_SECRET_ACCESS_KEY="" --build-arg AWS_DEFAULT_REGION="" ./Terraform/ -> Sendo necessário colocar os valores correto em cada variaveis de ambiente.
+docker run -ti terraform:1 bash -> Caso deseje acessar a imagem via terminal. 
+```
+
+
 Após a configuração necessária para o TerraForm acessar a AWS, será necessária a execução de dois comandos TerraForm, sendo eles:
  
 ```
