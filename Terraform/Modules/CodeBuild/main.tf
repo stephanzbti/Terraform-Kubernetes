@@ -5,6 +5,10 @@
 data "aws_caller_identity" "user_identity" {}
 data "aws_region" "user_identity_region" {}
 
+data "aws_iam_policy" "AdminPolcy" {
+  arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
 /*
   Resource
 */
@@ -121,6 +125,15 @@ POLICY
 
   depends_on = [
     aws_iam_role.codebuild_iam_role
+  ]
+}
+
+resource "aws_iam_role_policy_attachment" "Kubernetes-Admin-Role-Attch" {  
+  role       = aws_iam_role.codebuild_iam_role.name
+  policy_arn = data.aws_iam_policy.AdminPolcy.arn
+
+  depends_on = [
+      aws_iam_role.codebuild_iam_role
   ]
 }
 
