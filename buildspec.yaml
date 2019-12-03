@@ -24,8 +24,8 @@ phases:
       - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
       - echo Provisioning resource on EKS
       - kubectl apply -f ./Kubernetes/Services/Ingress-Nginx/
-      - kubectl apply -f ./Kubernetes/Services/MongoDB/
       - kubectl apply -f ./Kubernetes/Services/Storage-Class/
+      - kubectl apply -f ./Kubernetes/Services/MongoDB/
       - echo Provisioning Application on EKS
       - kubectl apply -f ./Kubernetes/Application/BackEnd/$ENVIRONMENT/
       - kubectl apply -f ./Kubernetes/Application/FrontEnd/$ENVIRONMENT/
