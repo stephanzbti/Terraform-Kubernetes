@@ -32,10 +32,10 @@ locals {
       Project     = "Hotmart Teste DevOps 2019"
       Environment = "Development"
   }
-  environment     = "Development"
-  cluster_name    = "K8s-Hotmart"
+  environment     = "development"
+  cluster_name    = "k8s-Hotmart"
   instance_type   = [ "t3.medium" ]
-  dns             = "${local.environment}.${data.aws_caller_identity.user_identity.account_id}.${data.aws_region.user_identity_region.name}.${local.cluster_name}.com"
+  dns             = "${local.environment}.${local.cluster_name}.${data.aws_caller_identity.user_identity.account_id}.${data.aws_region.user_identity_region.name}.com"
   cname           = "application"
 }
 
@@ -85,7 +85,7 @@ module "acm" {
 }
 
 module "route53-records" {
-  source = "../../Modules/Route43-Records"
+  source = "../../Modules/Route53/Route53-Records"
 
   route53                 = module.route53.route53
   resource_record_name    = module.acm.resource_record_name
@@ -114,7 +114,7 @@ module "security_group" {
 }
 
 module "security_group_rule" {
-  source = "../../Modules/Security-Group-Rule"
+  source = "../../Modules/Security-Group/Security-Group-Rule"
   
   security_group  = module.security_group.security_group
   type            = "ingress"
@@ -135,7 +135,7 @@ module "alb" {
 }
 
 module "route53-records-alb" {
-  source = "../../Modules/Route43-Records"
+  source = "../../Modules/Route53/Route53-Records"
 
   route53                 = module.route53.route53
   resource_record_name    = "${local.cname}.${local.dns}"
@@ -146,7 +146,7 @@ module "route53-records-alb" {
 
 
 module "alb_targe_group_1" {
-  source = "../../Modules/ALB-Target-Groups"
+  source = "../../Modules/ALB/ALB-Target-Groups"
   
   tag           = local.tags 
   name          = "Terraform-Target-Group-1"
@@ -156,7 +156,7 @@ module "alb_targe_group_1" {
 }
 
 module "alb_targe_group_2" {
-  source = "../../Modules/ALB-Target-Groups"
+  source = "../../Modules/ALB/ALB-Target-Groups"
   
   tag           = local.tags 
   name          = "Terraform-Target-Group-2"
@@ -166,7 +166,7 @@ module "alb_targe_group_2" {
 }
 
 module "alb_listener_ssl" {
-  source = "../../Modules/ALB-Listener-SSL"
+  source = "../../Modules/ALB/ALB-Listener-SSL"
   
   alb             = module.alb.alb
   port            = "443"
@@ -176,7 +176,7 @@ module "alb_listener_ssl" {
 }
 
 module "alb_listener" {
-  source = "../../Modules/ALB-Listener"
+  source = "../../Modules/ALB/ALB-Listener"
   
   alb             = module.alb.alb
   port            = "80"
