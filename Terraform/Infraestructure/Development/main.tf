@@ -33,7 +33,7 @@ locals {
       Environment = "Development"
   }
   environment     = "development"
-  cluster_name    = "k8s-Hotmart"
+  cluster_name    = "k8s-hotmart"
   instance_type   = [ "t3.medium" ]
   dns             = "${local.environment}.${local.cluster_name}.${data.aws_caller_identity.user_identity.account_id}.${data.aws_region.user_identity_region.name}.com"
   cname           = "application"
