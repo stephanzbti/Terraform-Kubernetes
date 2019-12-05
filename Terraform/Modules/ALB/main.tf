@@ -3,7 +3,7 @@
 */
 
 resource "aws_s3_bucket" "alb_s3_bucket_log" {
-  bucket = "alb-s3-log"
+  bucket = "${var.project_name}-${var.environment}-alb-log"
   acl    = "private"
   force_destroy = true
 
