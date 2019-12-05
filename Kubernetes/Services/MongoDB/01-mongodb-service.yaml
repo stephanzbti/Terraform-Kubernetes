@@ -7,10 +7,10 @@ metadata:
     app: mongodb-clusterip
 spec:
   type: ClusterIP
+  clusterIP: 172.20.15.40
   ports:
   - port: 27017
     targetPort: 27017
-    clusterIP: 10.100.168.15
   selector:
     app: mongodb-statefull
 ---
