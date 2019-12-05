@@ -7,7 +7,7 @@ terraform {
     bucket         = "terraform-state-files-hotmart"
     key            = "Infraestructure/Development/terraform.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "terraform-state-locks"
+    dynamodb_table = "terraform-state-development-locks"
     encrypt        = false
   }
 }
