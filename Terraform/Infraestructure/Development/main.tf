@@ -25,6 +25,10 @@ provider "aws" { }
 data "aws_caller_identity" "user_identity" {}
 data "aws_region" "user_identity_region" {}
 
+data "aws_autoscaling_group" "eks_nodegroup_autoscalling" {
+  name = module.kubernetes_node_group.eks_node_group_autoscalling[0]
+}
+
 locals {
   tags = {
       Developer   = "Stephan Zandona Bartkowiak"
@@ -58,12 +62,18 @@ module "kubernetes" {
   source = "../../Modules/Kubernetes-Cluster"
   
   cluster_name  = local.cluster_name
-  subnet       = module.vpc.subnet
+  subnet        = module.vpc.subnet
   vpc           = module.vpc.vpc
   tag           = local.tags
   environments  = local.environment
-  instance_type = local.instance_type
+}
+
+module "kubernetes_node_group" {
+  source = "../../Modules/Kubernetes-Cluster/Node-Group"
+
+  eks_name          = module.kubernetes.cluster_name
   subnet_nodegroup  = module.vpc.subnet_nodegroup
+  instance_type     = local.instance_type
 }
 
 /*
