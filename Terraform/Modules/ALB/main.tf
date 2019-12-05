@@ -6,14 +6,6 @@ resource "aws_s3_bucket" "alb_s3_bucket_log" {
   bucket = "${var.project_name}-${var.environment}-alb-log"
   acl    = "private"
   force_destroy = true
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm     = "AES256"
-      }
-    }
-  }
 }
 
 resource "aws_lb" "alb_kubernetes" {
