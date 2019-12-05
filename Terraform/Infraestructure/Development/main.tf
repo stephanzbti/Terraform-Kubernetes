@@ -165,16 +165,6 @@ module "alb_targe_group_2" {
   vpc           = module.vpc.vpc
 }
 
-module "alb_listener_ssl" {
-  source = "../../Modules/ALB/ALB-Listener-SSL"
-  
-  alb             = module.alb.alb
-  port            = "443"
-  protocol        = "HTTPS"
-  certificate     = module.acm.arn
-  target_group    = module.alb_targe_group_2.target_group
-}
-
 module "alb_listener" {
   source = "../../Modules/ALB/ALB-Listener"
   
