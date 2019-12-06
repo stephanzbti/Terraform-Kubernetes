@@ -27,7 +27,7 @@ data "aws_region" "user_identity_region" {}
 
 data "aws_instances" "aws_eks_node_group_machine" {
   instance_tags = {
-    "kubernetes.io/cluster/${kubernetes.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${module.kubernetes.cluster_name}" = "owned"
   }
 
   instance_state_names = ["running", "stopped"]
