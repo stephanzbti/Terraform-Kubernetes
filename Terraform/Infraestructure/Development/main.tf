@@ -25,8 +25,12 @@ provider "aws" { }
 data "aws_caller_identity" "user_identity" {}
 data "aws_region" "user_identity_region" {}
 
-data "aws_autoscaling_group" "eks_nodegroup_autoscalling" {
-  name = module.kubernetes_node_group.eks_node_group_autoscalling[0]
+data "aws_instances" "aws_eks_node_group_machine" {
+  instance_tags = {
+    "kubernetes.io/cluster/${kubernetes.cluster_name}" = "owned"
+  }
+
+  instance_state_names = ["running", "stopped"]
 }
 
 locals {
