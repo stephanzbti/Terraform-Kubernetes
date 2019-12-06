@@ -8,8 +8,6 @@ Para aplicarmos completamente todos os passos necessários para que o projeto ex
  
 1. [TerraForm](#Terraform)
     - Serviços
-2. [Kubernetes](#Kubernetes)
-    - Ingress Nginx
 
 Caso deseje fazer o processo manualmente de criação de cada parte dos recursos, provisionamento da aplicação e entender de forma detalhada de como funciona cada parte do processo, siga os pasos abaixo:
 
@@ -147,7 +145,7 @@ Optamos pela utilização do EKS para este projeto, graças a sua escalabilidade
  
 O Kubernetes é uma poderosa ferramenta de orquestração de containers, com ela podemos organizar os recursos da melhor maneira e ainda criar *réplicas* de nossas aplicações, para caso ocorra algum desastre a aplicação não fique fora do ar. Além disso, é uma das ferramentas com maior contribuição do GitHub, sendo uma comunidade forte e ativa de desenvolvimento. É possível também desenvolver plugins e serviços, que rodam junto ao Kubernetes e assim automatizar ainda mais todo o ambiente, e um desses exemplos seria o Ingress (Nginx ou ALB), cert-manager(Geração de Certificado Válidos), replicator(Réplica secrets), etc. Ao se utilizar todos os recursos que o Kubernetes nos provê, é possível ter uma infraestrutura robusta e com todos os recursos necessários para se executar uma aplicação perfeitamente.
  
-Neste projeto, optamos por criar um LoadBalancer Layer 7(ALB) e ao mesmo tempo um ingress Nginx em paralelo. Ambos provêm um application LoadBalancer muito poderoso, pelo qual cada um com seu caso de uso se torna ótimo utilizar. Optamos por deixar os dois, para demonstrar que é possível criar tanto um quanto o outro, e facilitar o processo de automatização do ambiente, juntando o poder do ALB e do TerraForm. Entretanto um ALB tem um custo fixo mensal de $25 e ainda existe um custo variável que ocorre de acordo com a quantidade de dados trafegados e a quantidade de requisições por mês, dessa forma poderia deixar um projeto pequeno inviável. O Ingress Nginx utiliza os recursos das próprias máquinas do Kubernetes, e por necessitar de um processamento baixo e de pouca memória, faz com que o custo com essa aplicação seja pequena, e ela funcione perfeitamente nestes casos de uso. Uma vantagem do ALB, seria a utilização de TCP (Secure), o que o Ingress Nginx não atenderia as especificações, portanto sempre recomendo analisar muito bem quais as necessidades dos serviços que serão providos pelo ingress.
+Neste projeto, optamos por criar um LoadBalancer Layer 7(ALB). Entretanto um ALB tem um custo fixo mensal de $25 e ainda existe um custo variável que ocorre de acordo com a quantidade de dados trafegados e a quantidade de requisições por mês, dessa forma poderia deixar um projeto pequeno inviável. Uma vantagem do ALB, seria a utilização de TCP (Secure), o que o Ingress Nginx não atenderia as especificações, portanto sempre recomendo analisar muito bem quais as necessidades dos serviços que serão providos pelo ingress.
 
  
 Os arquivos Kubernetes deste projeto estão armazenados na pasta *Kubernetes/*, eles estão divididos em dois conjuntos *Kubernetes/Application* e *Kubernetes/Services*. Segue uma explicação detalhada de cada pasta:
@@ -158,7 +156,6 @@ Kubernetes/
     |    |- FrontEnd/ -> Arquivos yaml do FrontEnd.
     |    |- BackEnd/ -> Arquivos yaml do BackEnd.
     |- Services/ -> Responsável por armazenar toda a infraestrutura de serviços necessários para a aplicação executar.
-    |    |- Ingress-Nginx/ -> Arquivos yaml do Ingress Nginx.
     |    |- MongoDB/ -> Arquivos yaml do MongoDB.
 ```
  
@@ -170,7 +167,6 @@ Kubernetes/
     |- configmap.yaml -> Responsavel pela criacao do configmap.
     |- services.yaml -> Responsavel pela criacao do services da aplicação(NodePort, ClusterIP ou LoadBalancer).
     |- deployment.yaml -> Responsável pela criação do deployment da aplicação.
-    |- ingress.yaml -> Responsável pela geração do Ingress da aplicação.
 ```
 > Obs1: Os arquivos contêm uma sequência de números iniciais como por exemplo *00-*, para que sejam aplicados na ordem certa, e haja uma organização. Como um arquivo yaml, pode depender do recurso existente no outro, e altamente recomendado que seja organizado desta forma.
  
@@ -184,25 +180,6 @@ Para provisionar essa aplicacao de maneira manual, sem o CodeBuild aplicar os ar
 kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atual.
 ```
 > É necessário estar dentro da pasta que deseja aplicar os arquivos ou trocar o __*.*__ pela pasta de destino dos arquivos Yaml, que deseja aplicar.
- 
-### Ingress Nginx
-
-Para utilizarmos o Ingress Nginx é necessário criar um LoadBalancer de Layer 7(ALB), o objetivo deste LoadBalancer será para que as requisições possam chegar aos servidores web corretamente. Para criarmos os recursos necessários para o Kubernetes reconhecer o Ingress Nginx e ele funcionar como um Application Gateway, e necessário aplicar seus arquivos yaml, estes arquivos estão dentro da pasta *Kubernetes/Services/Ingress-Nginx*. Comando necessário para aplicar:
- 
-```
-kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atual.
-```
-> É necessário estar dentro da pasta *Kubernetes/Services/Ingress-Nginx* ou trocar o __*.*__ por __*Kubernetes/Services/Ingress-Nginx*__.
- 
-Após aplicarmos corretamente os arquivos de configuração do Ingress Nginx e o LoadBalancer estiver criado corretamente, teremos um acesso às aplicações que estiverem hospedadas no Kubernetes, sendo necessário apenas configurar no DNS para apontar para o DNS do LoadBalancer criado.
- 
-Essa parte de apontamento do DNS do LoadBalancer no Route53, deverá ser feita manualmente, pois essa parte ainda não está automatizada neste processo. Uma forma de automatizar esse processo seria criando um serviço que rodaria junto ao Ingress e ele automaticamente registraria no Route53 a todo momento que for criado um novo Ingress no Kubernetes, dessa forma seria necessário apenas a criação do Ingress, sem a necessidade de criar no Route53, em *Python* uma aplicação deste porte seria feita rapidamente, recomendo que leia sobre a documentacao do [Boto3](https://github.com/boto/boto3) e [Kubernetes-Client Python](https://github.com/kubernetes-client/python), em outro momento irei criar um repositório com a aplicação que gerencia essa parte.
- 
-Com este poderoso LoadBalancer, poderemos configurar duas aplicações respondendo para a mesma URL, porém apontando para locais diferentes, como por exemplo: *https://application.onredes.com* (FrontEnd) - *https://application.onredes.com/api/* (BackEnd). Utilizando essa ferramenta podemos diminuir os custos de nossas aplicações.
- 
-Caso optassem por utilizar o ALB, poderíamos gerar ele automaticamente pelo Terraform, cadastrar o Route53 pelo TerraForm e ainda validar os certificados, porém como optamos em utilizar o Nginx focando em custo, não será possível fazer isso.
-
-Para configurar o certificado criado pelo Certificate Manager no LoadBalancer do Ingress é necessário editar o arquivo *02-services.yaml*, que está dentro da pasta *Kubernetes/Ingress-Nginx*, descomentando a __linha 11__ e substituindo o arn existente, pelo gerado do Certificar Manager, gerado pelo TerraForm, após isso todas as requisições provenientes a porta 443 do LoadBalancer irão conter certificados HTTPs.
 
 ### Storage Class
  
@@ -230,7 +207,7 @@ kubectl apply -f . -> Irá aplicar todos os arquivos Yaml de seu diretório atua
  
 ### Aplicação
  
-Para criarmos os recursos da aplicação no Kubernetes é necessário aplicarmos os arquivos YAML que estão dentro do folder *Application/(FrontEnd/BackEnd)*, estes arquivos irão criar os configmaps, namespaces, serviços, deployments e ingress. Como dito acima optamos por não colocar os secrets no repositório por questão de segurança, por isso será necessário criar manualmente os arquivos. Para isso execute os comandos abaixo:
+Para criarmos os recursos da aplicação no Kubernetes é necessário aplicarmos os arquivos YAML que estão dentro do folder *Application/(FrontEnd/BackEnd)*, estes arquivos irão criar os configmaps, namespaces, serviços, deployments. Como dito acima optamos por não colocar os secrets no repositório por questão de segurança, por isso será necessário criar manualmente os arquivos. Para isso execute os comandos abaixo:
  
 ```
 kubectl create secret generic -n application backend-user
