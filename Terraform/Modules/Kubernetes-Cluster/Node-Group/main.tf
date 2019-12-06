@@ -34,7 +34,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_nodegroup_AmazonEC2Contai
 
 resource "aws_eks_node_group" "eks_node_group" {
   cluster_name    = var.eks_name
-  node_group_name = "EKS-Node-Group-${}"
+  node_group_name = "EKS-Node-Group-${var.eks_name}"
   node_role_arn   = aws_iam_role.eks_cluster_nodegroup_role.arn
   subnet_ids      = var.subnet_nodegroup
   instance_types  = var.instance_type
