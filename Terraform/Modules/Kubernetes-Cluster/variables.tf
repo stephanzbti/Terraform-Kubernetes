@@ -7,11 +7,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "instance_type" {
-  description = "EKS - Kubernetes Cluster Instance Type"
-  type        = list
-}
-
 variable "environments" {
   description = "EKS - Kubernetes Cluster Environment"
   type        = string
@@ -19,11 +14,6 @@ variable "environments" {
 
 variable "subnet" {
   description = "EKS - Kubernetes Cluster Subnet"
-  type        = list
-}
-
-variable "subnet_nodegroup" {
-  description = "EKS - Kubernetes Cluster Subnet Node Group"
   type        = list
 }
 
