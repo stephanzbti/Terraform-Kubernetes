@@ -31,6 +31,10 @@ data "aws_instances" "aws_eks_node_group_machine" {
   }
 
   instance_state_names = ["running", "stopped"]
+
+  depends_on = [
+    module.kubernetes_node_group
+  ]
 }
 
 locals {
