@@ -135,7 +135,7 @@ module "alb" {
   
   alb                     = [
     [
-      "alb-k8s",
+      "alb-${local.cluster_name}",
       false,
       "application",
       module.vpc.security_loadbalancer,
