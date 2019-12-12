@@ -33,9 +33,9 @@ variable "environment_path" {
   type        = string
 }
 
-variable "tag" {
+variable "tags" {
   description = "CodeBuild - Tag"
-  type        = any
+  type        = map
 }
 
 variable "ecr_frontend" {

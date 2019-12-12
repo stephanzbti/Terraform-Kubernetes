@@ -7,22 +7,12 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "environments" {
-  description = "EKS - Kubernetes Cluster Environment"
-  type        = string
-}
-
 variable "subnet" {
   description = "EKS - Kubernetes Cluster Subnet"
   type        = list
 }
 
-variable "vpc" {
-  description = "EKS - Kubernetes Cluster VPC"
-  type        = string
-}
-
-variable "tag" {
+variable "tags" {
   description = "EKS - Kubernetes Cluster Tags"
-  type        = any
+  type        = map
 }

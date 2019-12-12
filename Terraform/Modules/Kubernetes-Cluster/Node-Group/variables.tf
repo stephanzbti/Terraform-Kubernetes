@@ -2,17 +2,12 @@
     Variables
 */
 
-variable "eks_name" {
-  description = "EKS - Kubernetes Cluster Name"
-  type        = string
+variable "eks_cluster" {
+  description = "EKS - Kubernetes Cluster"
+  type        = any
 }
 
-variable "subnet_nodegroup" {
-  description = "EKS - Node Group Subnet"
-  type        = list
-}
-
-variable "instance_type" {
-  description = "EKS - Node Group Instance Type"
+variable "eks_node_group" {
+  description = "EKS - Node Group"
   type        = list
 }

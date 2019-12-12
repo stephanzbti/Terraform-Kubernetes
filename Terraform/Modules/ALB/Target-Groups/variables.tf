@@ -2,9 +2,9 @@
     Variables
 */
 
-variable "tag" {
+variable "tags" {
   description = "ALB - Tag"
-  type        = any
+  type        = map
 }
 
 variable "name" {

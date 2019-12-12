@@ -5,5 +5,5 @@
 resource "aws_route53_zone" "route53" {
   name = var.dns
 
-  tags = var.tag
+  tags = var.tags
 }

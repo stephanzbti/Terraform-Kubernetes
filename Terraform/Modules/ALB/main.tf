@@ -2,14 +2,16 @@
     Resources
 */
 
-resource "aws_lb" "alb_kubernetes" {
-  name               = "ALB-Kubernetes"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = var.security_group
-  subnets            = var.subnets
+resource "aws_lb" "alb" {
+  count                      = length(var.alb)
 
-  enable_deletion_protection = true
+  name                       = var.alb[count.index][0]
+  internal                   = var.alb[count.index][1]
+  load_balancer_type         = var.alb[count.index][2]
+  security_groups            = var.alb[count.index][3].*.id
+  subnets                    = var.alb[count.index][4].*.id
 
-  tags = var.tag
+  enable_deletion_protection = var.alb[count.index][5]
+
+  tags                       = var.tags
 }

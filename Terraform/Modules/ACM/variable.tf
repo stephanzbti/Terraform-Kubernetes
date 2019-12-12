@@ -7,7 +7,7 @@ variable "dns" {
   type        = string
 }
 
-variable "tag" {
+variable "tags" {
   description = "ACM - Tag"
   type        = any
 }

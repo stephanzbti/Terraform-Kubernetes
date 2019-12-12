@@ -17,9 +17,9 @@ variable "environment" {
   type        = string
 }
 
-variable "tag" {
+variable "tags" {
   description = "CodePipeline - Tags"
-  type        = any
+  type        = map
 }
 
 variable "codebuild_name" {

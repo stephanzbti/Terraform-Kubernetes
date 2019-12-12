@@ -7,7 +7,7 @@ variable "dns" {
   type        = string
 }
 
-variable "tag" {
+variable "tags" {
   description = "Route 53 - Tag"
-  type        = any
+  type        = map
 }
