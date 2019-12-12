@@ -17,7 +17,7 @@ resource "aws_kms_key" "kms_codepipeline_s3_artifact" {
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "terraform-state-files-hotmart"
+  bucket = "terraform-state-files-teste"
 
   versioning {
     enabled = true
@@ -31,8 +31,18 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 }
 
-resource "aws_dynamodb_table" "terraform_locks" {
-  name         = "terraform-state-locks"
+resource "aws_dynamodb_table" "terraform-production_locks" {
+  name         = "terraform-state-production-locks"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"  
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "terraform_development_locks" {
+  name         = "terraform-state-development-locks"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"  
   attribute {
