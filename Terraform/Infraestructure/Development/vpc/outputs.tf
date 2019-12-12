@@ -2,17 +2,27 @@
   Output Values
 */
 
-output "subnet" {
-  value       = [ aws_subnet.first_zone.id, aws_subnet.second_zone.id ]
-  description = "EKS - Subnet1"
-}
-
-output "subnet_nodegroup" {
-  value       = [ aws_subnet.nodegroup_subnet1.id, aws_subnet.nodegroup_subnet2.id ]
-  description = "EKS - Node Group Subnet"
-}
-
 output "vpc" {
-  value       = aws_vpc.kubernetes_vpc.id
-  description = "EKS - VPC ID"
+  value       = module.vpc.vpc
+  description = "VPC"
+}
+
+output "subnet_public" {
+  value       = module.subnets.subnet_public
+  description = "Subnet Public"
+}
+
+output "subnet_private" {
+  value       = module.subnets.subnet_private
+  description = "Subnet Private"
+}
+
+output "security_loadbalancer" {
+  value       = module.security_loadbalanecer.security_group
+  description = "Security Group Load Balancer"
+}
+
+output "security_eks_nodegroup" {
+  value       = module.security_eks_nodegroup.security_group
+  description = "Security Group Load Balancer"
 }

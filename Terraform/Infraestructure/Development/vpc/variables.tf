@@ -2,12 +2,12 @@
     Variables
 */
 
-variable "tag" {
+variable "tags" {
   description = "VPC - Tags"
-  type        = any
+  type        = map
 }
 
-variable "cluster_name" {
-  description = "VPC - EKS Cluster Name"
+variable "cidr_block" {
+  description = "VPC - CIDR Blocks"
   type        = string
 }

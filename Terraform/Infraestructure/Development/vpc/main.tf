@@ -1,91 +1,71 @@
 /*
-  Data
+    Networks
 */
 
-data "aws_availability_zones" "available" {
-  state = "available"
+module "vpc" {
+    source          = "../../../Modules/VPC/"
+
+    cidr_block      = var.cidr_block
+    tags            = var.tags
 }
 
 /*
-    VPC
+    Gateways
 */
 
-resource "aws_vpc" "kubernetes_vpc" {
-  cidr_block       = "10.0.0.0/16"
-  instance_tenancy = "default"
-  enable_dns_hostnames  = true
+module "igw" {
+    source          = "../../../Modules/VPC/Internet-Gateway"
 
-  tags  = var.tag
+    vpc             = module.vpc.vpc  
+    tags            = var.tags
+}
+
+module "ngw" {
+    source          = "../../../Modules/VPC/Nat-Gateway"
+
+    gateways        = [[module.eip.eip.id, module.subnets.subnet_public[0].id]] 
+    tags            = var.tags
+}
+
+module "eip" {
+    source          = "../../../Modules/VPC/Elastic-IP"
+
+    tags            = var.tags
 }
 
 /*
-  Subnet - EKS Cluster
+  Subnets
 */
 
-resource "aws_subnet" "first_zone" {
-  vpc_id              = aws_vpc.kubernetes_vpc.id
-  cidr_block          = "10.0.1.0/24"
-  availability_zone   = "us-east-1a"
+module subnets {
+    source          = "../../../Modules/VPC/Subnets"
 
-  depends_on = [
-      aws_vpc.kubernetes_vpc
-  ]
-}
-
-resource "aws_subnet" "second_zone" {
-  vpc_id              = aws_vpc.kubernetes_vpc.id
-  cidr_block          = "10.0.2.0/24"
-  availability_zone   = "us-east-1b"
-
-  depends_on = [
-      aws_vpc.kubernetes_vpc
-  ]
-}
-
-
-/*
-  Subnet NodeGroup
-*/
-
-resource "aws_subnet" "nodegroup_subnet1" {
-  availability_zone = data.aws_availability_zones.available.names[3]
-  cidr_block        = cidrsubnet(aws_vpc.kubernetes_vpc.cidr_block, 8, 3)
-  vpc_id            = aws_vpc.kubernetes_vpc.id
-
-  tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-  }
-}
-
-resource "aws_subnet" "nodegroup_subnet2" {
-  availability_zone = data.aws_availability_zones.available.names[4]
-  cidr_block        = cidrsubnet(aws_vpc.kubernetes_vpc.cidr_block, 8, 4)
-  vpc_id            = aws_vpc.kubernetes_vpc.id
-
-  tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-  }
+    vpc             = module.vpc.vpc
+    igw             = module.igw.igw
+    ngw             = module.ngw.gateways[0]
+    tags            = var.tags
 }
 
 /*
-  Internet Gateway
+  Security Groups
 */
 
-resource "aws_internet_gateway" "internet_gateway" {
-  vpc_id = aws_vpc.kubernetes_vpc.id
+module "security_loadbalanecer" {
+    source          = "../../../Modules/VPC/Security-Groups"
 
-  tags  = var.tag
+    vpc             = module.vpc.vpc
+    ingress         = [[ 80, 80, "tcp", ["0.0.0.0/0"]], [ 443, 443, "tcp", ["0.0.0.0/0"]]]
+    egress          = [[ 0, 0, "-1", ["0.0.0.0/0"]], [ 0, 0, "-1", ["0.0.0.0/0"]]]
 
-  depends_on                = [
-    aws_vpc.kubernetes_vpc
-  ]
+    tags            = var.tags
 }
 
-resource "aws_route" "route" {
-  route_table_id            = aws_vpc.kubernetes_vpc.default_route_table_id
-  destination_cidr_block    = "0.0.0.0/0"
-  gateway_id                = aws_internet_gateway.internet_gateway.id
-  depends_on                = [
-    aws_vpc.kubernetes_vpc
-  ]
+module "security_eks_nodegroup" {
+    source          = "../../../Modules/VPC/Security-Groups"
+
+    vpc             = module.vpc.vpc
+    ingress         = [[ 80, 80, "tcp", [module.vpc.vpc.cidr_block]], [ 443, 443, "tcp", [module.vpc.vpc.cidr_block]], [ 1025, 65535, "tcp", [module.vpc.vpc.cidr_block]]]
+    egress          = [[ 0, 0, "-1", [module.vpc.vpc.cidr_block]], [ 0, 0, "-1", [module.vpc.vpc.cidr_block]], [ 0, 0, "-1", [module.vpc.vpc.cidr_block]]]
+
+    tags            = var.tags
 }

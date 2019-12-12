@@ -4,7 +4,7 @@
 
 terraform {
   backend "s3" {
-    bucket         = "terraform-state-files-hotmart"
+    bucket         = "terraform-state-files-teste"
     key            = "Infraestructure/Development/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-development-locks"
@@ -25,30 +25,18 @@ provider "aws" { }
 data "aws_caller_identity" "user_identity" {}
 data "aws_region" "user_identity_region" {}
 
-data "aws_instances" "aws_eks_node_group_machine" {
-  instance_tags = {
-    "kubernetes.io/cluster/${module.kubernetes.cluster_name}" = "owned"
-  }
-
-  instance_state_names = ["running", "stopped"]
-
-  depends_on = [
-    module.kubernetes_node_group
-  ]
-}
-
 locals {
   tags = {
-      Developer   = "Stephan Zandona Bartkowiak"
-      Date        = "28/11/2019"
-      Project     = "Hotmart Teste DevOps 2019"
-      Environment = "Development"
+    Developer                                      = "Stephan Zandona Bartkowiak"
+    Date                                           = "12/12/2019"
+    Project                                        = "DevOps - Terraform EKS Complete"
+    Environment                                    = "Development"
+    "kubernetes.io/cluster/${local.cluster_name}"  = "shared"
   }
-  environment     = "development"
-  cluster_name    = "k8s-hotmart"
-  instance_type   = [ "t3.medium" ]
-  dns             = "${local.environment}.${local.cluster_name}.${data.aws_caller_identity.user_identity.account_id}.${data.aws_region.user_identity_region.name}.com"
+  cluster_name    = "k8s-development"
+  dns             = "${local.cluster_name}.${data.aws_caller_identity.user_identity.account_id}.${data.aws_region.user_identity_region.name}.com"
   cname           = "application"
+  cidr_block      = "10.0.0.0/16"
 }
 
 /*
@@ -58,8 +46,8 @@ locals {
 module "vpc" {
   source = "./vpc/"
 
-  tag          = local.tags
-  cluster_name = module.kubernetes.cluster_name
+  tags          = local.tags
+  cidr_block    = local.cidr_block
 }
 
 /*
@@ -70,18 +58,26 @@ module "kubernetes" {
   source = "../../Modules/Kubernetes-Cluster"
   
   cluster_name  = local.cluster_name
-  subnet        = module.vpc.subnet
-  vpc           = module.vpc.vpc
-  tag           = local.tags
-  environments  = local.environment
+  subnet        = [
+    module.vpc.subnet_public[0], 
+    module.vpc.subnet_private[0]
+  ]
+  tags          = local.tags
 }
 
 module "kubernetes_node_group" {
   source = "../../Modules/Kubernetes-Cluster/Node-Group"
 
-  eks_name          = module.kubernetes.cluster_name
-  subnet_nodegroup  = module.vpc.subnet_nodegroup
-  instance_type     = local.instance_type
+  eks_cluster       = module.kubernetes.cluster_eks
+  eks_node_group    = [
+    [
+      module.vpc.subnet_private, 
+      ["t2.medium"], 
+      1, 
+      1, 
+      1
+    ]
+  ]
 }
 
 /*
@@ -91,103 +87,90 @@ module "kubernetes_node_group" {
 module "route53" {
   source = "../../Modules/Route53"
   
-  dns           = local.dns
-  tag           = local.tags  
+  dns            = local.dns
+  tags           = local.tags  
 }
 
 module "acm" {
   source = "../../Modules/ACM"
   
-  dns = local.dns
-  tag = local.tags
+  dns           = local.dns
+  tags          = local.tags
 }
 
 module "route53-records" {
-  source = "../../Modules/Route53/Route53-Records"
+  source                  = "../../Modules/Route53/Route53-Records"
 
-  route53                 = module.route53.route53
-  resource_record_name    = module.acm.resource_record_name
-  type                    = "CNAME"
-  ttl                     = "300"
-  resource_record_value   = module.acm.resource_record_value
+  route53                 = [
+    [
+      module.route53.route53.zone_id,
+      module.acm.acm.domain_validation_options.0.resource_record_name, 
+      "CNAME", 
+      "300", 
+      [module.acm.acm.domain_validation_options.0.resource_record_value]
+    ]
+  ]
 }
 
+module "route53-records-acm" {
+  source                  = "../../Modules/Route53/Route53-Records"
+
+  route53                 = [
+    [
+      module.route53.route53.zone_id,
+      "${local.cname}.${local.dns}", 
+      "CNAME", 
+      "300", 
+      [module.alb.alb[0].dns_name]
+    ]
+  ]
+}
 
 /*
   ALB
 */
 
-module "security_group" {
-  source = "../../Modules/Security-Group"
-  
-  vpc                 = module.vpc.vpc
-  ingress_from_port   = 80
-  ingress_to_port     = 80
-  ingress_protocol    = "tcp"
-  ingress_cidr        = ["0.0.0.0/0"]
-  egress_from_port    = 0
-  egress_to_port      = 0
-  egress_protocol     = "-1"
-  egress_cidr         = ["0.0.0.0/0"]
-}
-
-module "security_group_rule" {
-  source = "../../Modules/Security-Group/Security-Group-Rule"
-  
-  security_group  = module.security_group.security_group
-  type            = "ingress"
-  from_port       = 443
-  to_port         = 443
-  protocol        = "tcp"
-  cidr            = ["0.0.0.0/0"]
-}
-
 module "alb" {
-  source = "../../Modules/ALB"
+  source                  = "../../Modules/ALB"
   
-  project_name  = local.cluster_name
-  environment   = local.environment
-  tag           = local.tags  
-  security_group  = [ module.security_group.security_group ]
-  subnets         = module.vpc.subnet_nodegroup
+  alb                     = [
+    [
+      "alb-k8s",
+      false,
+      "application",
+      module.vpc.security_loadbalancer,
+      concat(module.vpc.subnet_public, module.vpc.subnet_private),
+      false
+    ]
+  ]
+  tags                    = local.tags
 }
 
-module "route53-records-alb" {
-  source = "../../Modules/Route53/Route53-Records"
-
-  route53                 = module.route53.route53
-  resource_record_name    = "${local.cname}.${local.dns}"
-  type                    = "CNAME"
-  ttl                     = "300"
-  resource_record_value   = module.alb.dns_name
-}
-
-
-module "alb_targe_group_1" {
-  source = "../../Modules/ALB/ALB-Target-Groups"
+# module "alb_targe_group_1" {
+#   source = "../../Modules/ALB/ALB-Target-Groups"
   
-  tag           = local.tags 
-  name          = "Terraform-Target-Group-1"
-  port          = 31987
-  protocol      = "HTTP"
-  vpc           = module.vpc.vpc
-}
+#   tag           = local.tags 
+#   name          = "Terraform-Target-Group-1"
+#   port          = 31987
+#   protocol      = "HTTP"
+#   vpc           = module.vpc.vpc.id
+# }
 
-module "alb_targe_group_2" {
-  source = "../../Modules/ALB/ALB-Target-Groups"
+# module "alb_targe_group_2" {
+#   source = "../../Modules/ALB/ALB-Target-Groups"
   
-  tag           = local.tags 
-  name          = "Terraform-Target-Group-2"
-  port          = 32078
-  protocol      = "HTTP"
-  vpc           = module.vpc.vpc
-}
+#   tag           = local.tags 
+#   name          = "Terraform-Target-Group-2"
+#   port          = 32078
+#   protocol      = "HTTP"
+#   vpc           = module.vpc.vpc.id
+# }
 
-module "alb_listener" {
-  source = "../../Modules/ALB/ALB-Listener"
+# module "alb_listener" {
+#   source = "../../Modules/ALB/ALB-Listener"
   
-  alb             = module.alb.alb
-  port            = "80"
-  protocol        = "HTTP"
-  target_group    = module.alb_targe_group_1.target_group
-}
+#   alb             = module.alb.alb
+#   port            = "80"
+#   protocol        = "HTTP"
+#   target_group    = module.alb_targe_group_1.target_group
+# }
