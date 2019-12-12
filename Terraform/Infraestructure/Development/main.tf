@@ -146,25 +146,26 @@ module "alb" {
   tags                    = local.tags
 }
 
-# module "alb_targe_group_1" {
-#   source = "../../Modules/ALB/ALB-Target-Groups"
+module "alb_target" {
+  source                = "../../Modules/ALB/Target-Groups"
   
-#   tag           = local.tags 
-#   name          = "Terraform-Target-Group-1"
-#   port          = 31987
-#   protocol      = "HTTP"
-#   vpc           = module.vpc.vpc.id
-# }
+  target                = [
+    [
+      local.cluster_name,
+      31987,
+      "HTTP",
+      module.vpc.vpc
+    ],
+    [
+      local.cluster_name,
+      32078,
+      "HTTP",
+      module.vpc.vpc
+    ]
+  ]
 
-# module "alb_targe_group_2" {
-#   source = "../../Modules/ALB/ALB-Target-Groups"
-  
-#   tag           = local.tags 
-#   name          = "Terraform-Target-Group-2"
-#   port          = 32078
-#   protocol      = "HTTP"
-#   vpc           = module.vpc.vpc.id
-# }
+  tags                    = local.tags
+}
 
 # module "alb_listener" {
 #   source = "../../Modules/ALB/ALB-Listener"
