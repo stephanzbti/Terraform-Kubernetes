@@ -25,6 +25,16 @@ provider "aws" { }
 data "aws_caller_identity" "user_identity" {}
 data "aws_region" "user_identity_region" {}
 
+data "aws_instances" "kubernetes_ec2" {
+  instance_tags = {
+    "kubernetes.io/cluster/${local.cluster_name}" = "owned"
+  }
+
+  depends_on = [
+    module.kubernetes_node_group
+  ]
+}
+
 locals {
   tags = {
     Developer                                      = "Stephan Zandona Bartkowiak"
@@ -165,6 +175,18 @@ module "alb_target" {
   ]
 
   tags                    = local.tags
+}
+
+module "alb_target_groups_attachment" {
+  source = "../../Modules/ALB/Target-Group-Attachment"
+  
+  target_group            = [
+    [
+      module.alb_target.target_group[0].id,
+      data.aws_instances.kubernetes_ec2,
+      31987
+    ]
+  ]
 }
 
 # module "alb_listener" {
